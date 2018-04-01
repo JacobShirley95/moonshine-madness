@@ -1,3 +1,5 @@
+import Truck from "./truck.js";
+
 var Example = Example || {};
 
 Example.car = function() {
@@ -38,55 +40,60 @@ Example.car = function() {
     // add bodies
     World.add(world, [
         // walls
-        Bodies.rectangle(400, 0, 800, 50, { isStatic: true }),
-        Bodies.rectangle(400, 600, 800, 50, { isStatic: true }),
-        Bodies.rectangle(800, 300, 50, 600, { isStatic: true }),
-        Bodies.rectangle(0, 300, 50, 600, { isStatic: true })
+        Bodies.rectangle(400, 0, 1200, 50, { isStatic: true, friction: 1 }),
+        Bodies.rectangle(400, 600, 1200, 50, { isStatic: true, friction: 1 }),
+        Bodies.rectangle(1000, 300, 50, 600, { isStatic: true, friction: 1 }),
+        Bodies.rectangle(0, 300, 50, 600, { isStatic: true, friction: 1 })
     ]);
 
-    var scale = 1;
-    var car = Composites.car(260, 50, 310 * scale, 30 * scale, 30 * scale);
-    World.add(world, car);
-
-    console.log(car.constraints);
-
-    car.constraints[0].stiffness = car.constraints[1].stiffness = 0.1;
-    car.constraints[0].damping = car.constraints[1].damping = 0.1;
+    World.add(world, [
+        Bodies.rectangle(200, 350, 800, 20, { isStatic: true, angle: Math.PI * 0.1 , friction: 1}),
+    ]);
 
     var stage = new createjs.Stage("game");
 
-    var body = new createjs.Bitmap("assets/textures/car_body.png");
-    //body.graphics.beginFill("red").drawRect(-75, -15, 150, 30);
-
-    body.scaleX=0.5;
-    body.scaleY=0.5;
-    body.regX = 400;
-    body.regY = 290;
-    stage.addChild(body);
-
-    var wheel1 = new createjs.Shape();
-    wheel1.graphics.beginFill("DeepSkyBlue").drawCircle(0, 0, 30);
-    stage.addChild(wheel1);
-
-    var wheel2 = new createjs.Shape();
-    wheel2.graphics.beginFill("DeepSkyBlue").drawCircle(0, 0, 30);
-    stage.addChild(wheel2);
+    var truck = new Truck(200, 100, 305, 40, 40, 1.0);
+    truck.configureWheel(0, 0.2, 0.2, 0.9, 20);
+    truck.configureWheel(1, 0.2, 0.2, 0.9, 20);
+    truck.load(world, stage);
 
     var bodies = Composite.allBodies(engine.world);
+    var objs = [];
+    var debug = true;
 
-    console.log(bodies[4]);
+    for (let b of bodies) {
+        var s = new createjs.Shape();
+        var g = s.graphics;
+        g.beginStroke("green");
+        g.setStrokeStyle(4);
+        var verts = b.vertices;
+        s.x = b.position.x;
+        s.y = b.position.y;
+        for (var i = 0; i < verts.length; i++) {
+            g.moveTo(verts[i].x - s.x, verts[i].y - s.y);
+            g.lineTo(verts[(i + 1) % verts.length].x - s.x, verts[(i + 1) % verts.length].y - s.y);
+        }
+        g.endStroke();
+        //console.log(verts);
+
+        objs.push(s);
+        stage.addChild(s);
+
+        //myGraphics.beginStroke("red").beginFill("blue").drawRect(20, 20, 100, 50);
+    }
 
     Math.degrees = function(radians) {
         return radians * 180 / Math.PI;
     };
 
     function draw() {
-        setPos(bodies[4], body);
-        setPos(bodies[5], wheel1);
-        setPos(bodies[6], wheel2);
+        for (var i = 0; i < bodies.length; i++) {
+            objs[i].visible = debug;
+            if (debug)
+                setPos(bodies[i], objs[i]);
+        }
 
-        console.log(bodies[4].angle);
-
+        truck.update(stage);
         stage.update();
 
         requestAnimationFrame(draw);
@@ -95,7 +102,9 @@ Example.car = function() {
     function setPos(body, renderObj) {
         renderObj.x = body.position.x;
         renderObj.y = body.position.y;
-        renderObj.rotation = Math.degrees(body.angle);
+
+        if (!body.isStatic)
+            renderObj.rotation = Math.degrees(body.angle);
     }
 
     draw();

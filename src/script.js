@@ -1,6 +1,17 @@
 import Truck from "./truck.js";
+import GameObject from "./game-object.js";
+import Renderer from "./renderer.js";
+import World from "./world.js";
 
 var Example = Example || {};
+
+Math.degrees = function(radians) {
+    return radians * 180 / Math.PI;
+};
+
+const debug = false;
+
+var offsetX = 0;
 
 Example.car = function() {
     var Engine = Matter.Engine,
@@ -9,7 +20,6 @@ Example.car = function() {
         Composites = Matter.Composites,
         MouseConstraint = Matter.MouseConstraint,
         Mouse = Matter.Mouse,
-        World = Matter.World,
         Body = Matter.Body,
         Bodies = Matter.Bodies,
         Constraint = Matter.Constraint,
@@ -17,94 +27,92 @@ Example.car = function() {
 
     // create engine
     var engine = Engine.create(),
-        world = engine.world;
+        physics = engine.world;
 
-    // create renderer
-    /*var render = Render.create({
-        element: document.body,
-        engine: engine,
-        options: {
-            width: 800,
-            height: 600,
-            showAngleIndicator: true,
-            showCollisions: true
-        }
-    });
-
-    Render.run(render);*/
 
     // create runner
     var runner = Runner.create();
     Runner.run(runner, engine);
 
+    const f = 0.2;
+    const ff = 0.9;
+
+    var ramp = Bodies.rectangle(700, 900, -5000, 600, { isStatic: true, frictionStatic: f, friction: ff, density: 1, angle: 0.1 * Math.PI });
     // add bodies
-    World.add(world, [
+    Matter.World.add(physics, [
         // walls
-        Bodies.rectangle(400, 0, 1200, 50, { isStatic: true, friction: 1 }),
-        Bodies.rectangle(400, 600, 1200, 50, { isStatic: true, friction: 1 }),
-        Bodies.rectangle(1000, 300, 50, 600, { isStatic: true, friction: 1 }),
-        Bodies.rectangle(0, 300, 50, 600, { isStatic: true, friction: 1 })
+        //Bodies.rectangle(400, 0, 1200, 50, { isStatic: true, frictionStatic: f, friction: ff, density: 1 }),
+        //Bodies.rectangle(400, 600, 1200, 50, { isStatic: true, frictionStatic: f, friction: ff, density: 1 }),
+        //Bodies.rectangle(1000, 300, 50, 600, { isStatic: true, frictionStatic: f, friction: ff, density: 1 }),
+        //Bodies.rectangle(0, 300, 50, 600, { isStatic: true, frictionStatic: f, friction: ff, density: 1 }),
+        ramp
     ]);
 
-    World.add(world, [
-        Bodies.rectangle(200, 350, 800, 20, { isStatic: true, angle: Math.PI * 0.1 , friction: 1}),
-    ]);
+    const BLOCKS = 5;
 
-    var stage = new createjs.Stage("game");
+    var renderer = new Renderer(300, 600, 300, 500);
+    var world = new World(physics, renderer);
+    var truck = new Truck(500, 300, 305, 1.0);
 
-    var truck = new Truck(200, 100, 305, 40, 40, 1.0);
-    truck.configureWheel(0, 0.2, 0.2, 0.9, 20);
-    truck.configureWheel(1, 0.2, 0.2, 0.9, 20);
-    truck.load(world, stage);
+    truck.addWheel(-150, 40, 40, 0.2, 0.1, 0.8);
+    truck.addWheel(110, 40, 40, 0.2, 0.1, 0.8);
+    truck.load(physics, world);
+    truck.flipX();
 
-    var bodies = Composite.allBodies(engine.world);
-    var objs = [];
-    var debug = true;
+    renderer.follow(truck.chassis.renderObj);
 
-    for (let b of bodies) {
-        var s = new createjs.Shape();
-        var g = s.graphics;
-        g.beginStroke("green");
-        g.setStrokeStyle(4);
-        var verts = b.vertices;
-        s.x = b.position.x;
-        s.y = b.position.y;
-        for (var i = 0; i < verts.length; i++) {
-            g.moveTo(verts[i].x - s.x, verts[i].y - s.y);
-            g.lineTo(verts[(i + 1) % verts.length].x - s.x, verts[(i + 1) % verts.length].y - s.y);
-        }
-        g.endStroke();
-        //console.log(verts);
+    world.addObject(new GameObject(ramp, null));
+    world.addObject(truck);
 
-        objs.push(s);
-        stage.addChild(s);
+    var blocks = [];
+    for (let i = 0; i < BLOCKS; i++) {
+        var b = Bodies.rectangle(200, 350, 50, 50, {  friction: 0.9, frictionStatic: 0.6, density: 0.01});
+        Matter.Body.setMass(b, 100);
 
-        //myGraphics.beginStroke("red").beginFill("blue").drawRect(20, 20, 100, 50);
+        blocks.push(b);
+        world.addObject(new GameObject(b));
     }
 
-    Math.degrees = function(radians) {
-        return radians * 180 / Math.PI;
-    };
+    Matter.World.add(physics, blocks);
+
+    var left = false;
+    var right = false;
+
+    document.addEventListener("keydown", function(ev) {
+        if (ev.key == "a") {
+            left = true;
+        } else if (ev.key == "d") {
+            right = true;
+        }
+    });
+
+    document.addEventListener("keyup", function(ev) {
+        if (ev.key == "a") {
+            left = false;
+        } else if (ev.key == "d") {
+            right = false;
+        }
+    });
+
+    var debug = document.getElementById("debug");
+    world.debug(debug);
 
     function draw() {
-        for (var i = 0; i < bodies.length; i++) {
-            objs[i].visible = debug;
-            if (debug)
-                setPos(bodies[i], objs[i]);
+        debug.innerHTML = "RenderX: " + Math.round(renderer.renderX)+"px" + "<br />RenderY: " + Math.round(renderer.renderY)+"px";
+        if (left) {
+            truck.wheels[1].applyTorque(-30);
         }
 
-        truck.update(stage);
-        stage.update();
+        if (right) {
+            truck.wheels[1].applyTorque(30);
+        }
+
+        //truck.update();
+        world.update();
+
+        renderer.render();
 
         requestAnimationFrame(draw);
-    }
-
-    function setPos(body, renderObj) {
-        renderObj.x = body.position.x;
-        renderObj.y = body.position.y;
-
-        if (!body.isStatic)
-            renderObj.rotation = Math.degrees(body.angle);
     }
 
     draw();
@@ -121,7 +129,7 @@ Example.car = function() {
             }
         });
 
-    World.add(world, mouseConstraint);
+    Matter.World.add(physics, mouseConstraint);
 };
 
 Example.car();

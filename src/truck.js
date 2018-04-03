@@ -1,68 +1,148 @@
 function setPos(body, renderObj) {
-    renderObj.x = body.position.x;
+    renderObj.x = body.position.x + offsetX;
     renderObj.y = body.position.y;
-    renderObj.rotation = Math.degrees(body.angle);
+    renderObj.rotation = Math.degrees(addAngles(body));
 }
 
-export default class Truck {
-    constructor(x, y, width, wheel1Radius, wheel2Radius, scale) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.wheel1Radius = wheel1Radius;
-        this.wheel2Radius = wheel2Radius;
+function addAngles(body) {
+    if (body.parent != body) {
+        return body.angle + addAngles(body.parent);
+    }
+    return body.angle;
+}
+
+const CHASSIS_WIDTH = 450;
+
+import GameObject from "./game-object.js";
+import CompositeGameObject from "./composite-game-object.js";
+
+export default class Truck extends CompositeGameObject {
+    constructor(x, y, scale) {
+        super();
+
         this.scale = scale;
+        this.wheels = [];
 
-        this._carPhysics = Matter.Composites.car(x, y, width * this.scale, this.wheel1Radius * this.scale, this.wheel2Radius * this.scale);
-        //this._carPhysics.bodies[0].setMass(880);
-        //this._carPhysics.bodies[1].setMass(60);
-        //this._carPhysics.bodies[2].setMass(60);
-        Matter.Body.setMass(this._carPhysics.bodies[0], 880);
-        Matter.Body.setMass(this._carPhysics.bodies[1], 60);
-        Matter.Body.setMass(this._carPhysics.bodies[2], 60);
-        console.log(this._carPhysics);
+        this.colGroup = Matter.Body.nextGroup(true);
+        this.carComposite = Matter.Composite.create({ label: 'Car' });
+
+        var chassis = Matter.Bodies.rectangle(x, y, CHASSIS_WIDTH, 50, {
+            density: 0.02,
+            friction: 0.7
+        });
+        Matter.Body.setMass(chassis, 380);
+
+        var body2 = new createjs.Bitmap("assets/textures/car_body.png");
+        body2.scaleX = 0.5;
+        body2.scaleY = 0.5;
+        body2.regX = 451.5;
+        body2.regY = 155 + 95;
+
+        this.chassis = new GameObject(chassis, body2);
+
+        var cargo = Matter.Bodies.rectangle(x - 120, y - 50, 130, 40, {
+            density: 0.02
+        });
+        Matter.Body.setMass(cargo, 200);
+
+        this.cargo = new GameObject(cargo, null);
+
+        var cargoDoor = Matter.Bodies.rectangle(x + (CHASSIS_WIDTH * 0.5), y - 70, 10, 100, {
+            density: 0.02
+        });
+        Matter.Body.setMass(cargoDoor, 20);
+
+        this.cargoDoor = new GameObject(cargoDoor, null);
+
+        var cabin = Matter.Bodies.rectangle(x - 10, y - 70, 100, 100, {
+            density: 0.02
+        });
+        Matter.Body.setMass(cabin, 300);
+
+        this.cabin = new GameObject(cabin, null);
+
+        var body = Matter.Body.create({
+            parts: [chassis, cargo, cargoDoor, cabin],
+            collisionFilter: { group: this.colGroup },
+        });
+
+        this.body = new GameObject(body, null, this.chassis, this.cargo, this.cargoDoor, this.cabin);
+        this.gameObjects.push(this.body);
     }
 
-    configureWheel(index, suspensionDamping, suspensionStiffness, friction, height) {
-        this._carPhysics.constraints[index].damping = suspensionDamping;
-        this._carPhysics.constraints[index].stiffness = suspensionStiffness;
-        this._carPhysics.bodies[1 + index].friction = friction;
-        //console.log(this._carPhysics.constraints[index]);
-
-        var base = this._carPhysics.constraints[index].pointB;
-        this._carPhysics.constraints[index].pointB = {x: base.x, y: base.y + height};
+    bounds() {
+        return this.body.bounds;
     }
 
-    load(world, stage) {
-        Matter.World.add(world, this._carPhysics);
+    width() {
+        var bounds = this.body.bounds;
+        return bounds.max.x - bounds.min.x;
+    }
 
-        this.body = new createjs.Bitmap("assets/textures/car_body.png");
-        this.body.scaleX = 0.5;
-        this.body.scaleY = 0.5;
-        this.body.regX = 400;
-        this.body.regY = 290;
-        stage.addChild(this.body);
+    height() {
+        var bounds = this.body.bounds;
+        return bounds.max.y - bounds.min.y;
+    }
 
-        this.wheel1 = new createjs.Bitmap("assets/textures/wheel_01.png");
+    position() {
+        return this.body.physicsObj.position;
+    }
 
-        //this.wheel1.graphics.beginFill("DeepSkyBlue").drawCircle(0, 0, this._carPhysics.bodies[1].circleRadius);
-        stage.addChild(this.wheel1);
+    centre() {
+        return Matter.Vertices.centre(this.body.physicsObj.vertices);
+    }
 
-        this.wheel2 = new createjs.Bitmap("assets/textures/wheel_01.png");
+    chassisCentre() {
+        return Matter.Vertices.centre(this.chassis.physicsObj.vertices);
+    }
 
-        this.wheel1.scale = this.wheel2.scale = 0.5;
-        this.wheel1.regX = this.wheel2.regX = 82.5;
-        this.wheel1.regY = this.wheel2.regY = 82.5;
+    addWheel(offsetX, offsetY, radius, suspensionDamping, suspensionStiffness, friction) {
+        var pos = this.position();
+        var chassisCen = this.chassisCentre();
+        var diff = Matter.Vector.sub(chassisCen, pos);
 
-        //this.wheel2.graphics.beginFill("DeepSkyBlue").drawCircle(0, 0, this._carPhysics.bodies[2].circleRadius);
-        stage.addChild(this.wheel2);
+        var wheel = Matter.Bodies.circle(pos.x + offsetX, pos.y + offsetY, radius, {
+            collisionFilter: { group: this.colGroup },
+            friction: friction,
+            density: 0.02,
+            frictionStatic: 0.7
+        });
+
+        var axel = Matter.Constraint.create({
+            bodyB: this.body.physicsObj,
+            pointB: { x: diff.x + offsetX, y: diff.y + offsetY },
+            bodyA: wheel,
+            stiffness: suspensionStiffness,
+            damping: suspensionDamping,
+            length: 0
+        });
+
+        Matter.Composite.addBody(this.carComposite, wheel);
+        Matter.Composite.addConstraint(this.carComposite, axel);
+
+        Matter.Body.setMass(wheel, 60);
+
+        var wheelBitmap = new createjs.Bitmap("assets/textures/wheel_01.png");
+        wheelBitmap.scale = 0.5;
+        wheelBitmap.regX = 82.5;
+        wheelBitmap.regY = 82.5;
+
+        var gO = new GameObject(wheel, wheelBitmap);
+        this.gameObjects.push(gO);
+        this.wheels.push(gO);
+    }
+
+    load(physics, world) {
+        Matter.Composite.addBody(this.carComposite, this.body.physicsObj);
+        Matter.World.add(physics, this.carComposite);
+
+        this.physicsObj = this.carComposite;
+
+        this.com = new createjs.Shape();
+        this.com.graphics.beginFill("green").drawRect(0, 0, 15, 15).endFill();
+        //world.renderer.addObject(this.com);
     }
 
     update() {
-        var bodies = this._carPhysics.bodies;
-
-        setPos(bodies[0], this.body);
-        setPos(bodies[1], this.wheel1);
-        setPos(bodies[2], this.wheel2);
     }
 }

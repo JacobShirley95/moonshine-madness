@@ -68,6 +68,14 @@ export default class GameObject {
             this.debugShape = createDebug(physicsObj);
     }
 
+    debug(flag) {
+        if (this.debugShape)
+            this.debugShape.renderObj.visible = flag;
+
+        for (let gO of this.gameObjects)
+            gO.debug(flag);
+    }
+
     flipX(onlyRenderObj) {
         if (this.renderObj)
             this.renderObj.scaleX *= -1;

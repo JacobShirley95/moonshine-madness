@@ -9,7 +9,7 @@ Math.degrees = function(radians) {
     return radians * 180 / Math.PI;
 };
 
-const debug = false;
+const debug = true;
 
 var offsetX = 0;
 
@@ -77,12 +77,15 @@ Example.car = function() {
 
     var left = false;
     var right = false;
+    var stop = false;
 
     document.addEventListener("keydown", function(ev) {
         if (ev.key == "a") {
             left = true;
         } else if (ev.key == "d") {
             right = true;
+        } else if (ev.key == "s") {
+            stop = true;
         }
     });
 
@@ -91,6 +94,8 @@ Example.car = function() {
             left = false;
         } else if (ev.key == "d") {
             right = false;
+        } else if (ev.key == "s") {
+            stop = false;
         }
     });
 
@@ -105,6 +110,10 @@ Example.car = function() {
 
         if (right) {
             truck.wheels[1].applyTorque(30);
+        }
+
+        if (stop) {
+            Matter.Body.setAngularVelocity(truck.wheels[1].physicsObj, 0);
         }
 
         //truck.update();

@@ -26,8 +26,7 @@ export default class World {
         this.debug = flag;
 
         for (let gO of this.gameObjects) {
-            if (gO.debugShape)
-                gO.debugShape.renderObj.visible = flag;
+            gO.debug(flag);
         }
     }
 

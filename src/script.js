@@ -2,6 +2,7 @@ import Truck from "./truck.js";
 import GameObject from "./game-object.js";
 import Renderer from "./renderer.js";
 import World from "./world.js";
+import SVGMapLoader from "./svg-map.js";
 
 var Example = Example || {};
 
@@ -37,7 +38,8 @@ Example.car = function() {
     const f = 0.2;
     const ff = 0.9;
 
-    var ramp = Bodies.rectangle(700, 900, -5000, 600, { isStatic: true, frictionStatic: f, friction: ff, density: 1, angle: 0.1 * Math.PI });
+    /*var slope = Bodies.rectangle(0, 0, 10000, 60, { isStatic: true, frictionStatic: f, friction: ff, density: 1, angle: 0.2 * Math.PI });
+    var ramp = Bodies.rectangle(1400, 900, 200, 30, {isStatic: true, density: 1, angle: 0});
     // add bodies
     Matter.World.add(physics, [
         // walls
@@ -45,14 +47,16 @@ Example.car = function() {
         //Bodies.rectangle(400, 600, 1200, 50, { isStatic: true, frictionStatic: f, friction: ff, density: 1 }),
         //Bodies.rectangle(1000, 300, 50, 600, { isStatic: true, frictionStatic: f, friction: ff, density: 1 }),
         //Bodies.rectangle(0, 300, 50, 600, { isStatic: true, frictionStatic: f, friction: ff, density: 1 }),
+        slope,
         ramp
-    ]);
+    ]);*/
 
     const BLOCKS = 5;
 
-    var renderer = new Renderer(300, 600, 300, 500);
+    var renderer = new Renderer(-200, 200, 100, 300);
+    renderer.scale(0.2);
     var world = new World(physics, renderer);
-    var truck = new Truck(500, 300, 305, 1.0);
+    var truck = new Truck(500, 0, 305, 1.0);
 
     truck.addWheel(-150, 40, 40, 0.2, 0.1, 0.8);
     truck.addWheel(110, 40, 40, 0.2, 0.1, 0.8);
@@ -61,19 +65,35 @@ Example.car = function() {
 
     renderer.follow(truck.chassis.renderObj);
 
-    world.addObject(new GameObject(ramp, null));
+    //world.addObject(new GameObject(slope, null));
+    //world.addObject(new GameObject(ramp, null));
     world.addObject(truck);
 
-    var blocks = [];
-    for (let i = 0; i < BLOCKS; i++) {
-        var b = Bodies.rectangle(200, 350, 50, 50, {  friction: 0.9, frictionStatic: 0.6, density: 0.01});
-        Matter.Body.setMass(b, 100);
+    var mapLoader = new SVGMapLoader("assets/maps/test.svg", function(loader) {
+        var collisionShapes = loader.getCollisionShapes();
 
-        blocks.push(b);
-        world.addObject(new GameObject(b));
-    }
+        console.log(collisionShapes);
 
-    Matter.World.add(physics, blocks);
+        for (let shape of collisionShapes) {
+            var b = null;
+            if (shape.type == "rect") {
+                b = Bodies.rectangle(shape.cx, shape.cy, shape.width, shape.height, {angle: shape.rotation, isStatic: true});
+            } else if (shape.type == "circle") {
+
+            } else if (shape.type == "path") {
+                b = Bodies.fromVertices(shape.cx, shape.cy, shape.vertices, {isStatic: true, angle: shape.rotation});
+            }  else if (shape.type == "polyline") {
+                b = Bodies.fromVertices(shape.cx, shape.cy, shape.vertices, {isStatic: true, angle: shape.rotation}, false, 0.01, 3);
+
+                //console.log(shape.vertices);
+                let c = Matter.Vertices.centre(shape.vertices);
+                Matter.Body.setPosition(b, c);
+            }
+
+            Matter.World.addBody(physics, b);
+            world.addObject(new GameObject(b));
+        }
+    });
 
     var left = false;
     var right = false;

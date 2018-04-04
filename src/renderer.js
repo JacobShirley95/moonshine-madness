@@ -16,6 +16,10 @@ export default class Renderer {
         this.renderObjs = [];
     }
 
+    scale(sc) {
+        this.stage.scaleX *= this.stage.scaleY = sc;
+    }
+
     setVisible(obj, flag) {
         obj.visible = flag;
     }

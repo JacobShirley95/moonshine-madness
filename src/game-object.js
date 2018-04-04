@@ -31,9 +31,9 @@ function createDebug(b) {
 
     var gameObject = new GameObject();
     gameObject.physicsObj = b;
-    gameObject.renderObj = drawBody(b);
+    //gameObject.renderObj = drawBody(b);
 
-    /*if (b.parts.length > 1) {
+    if (b.parts.length > 1) {
         var container = new createjs.Container();
 
         for (let i = 1; i < b.parts.length; i++) {
@@ -51,9 +51,7 @@ function createDebug(b) {
     } else {
         let s = drawBody(b);
         gameObject.renderObj = s;
-    }*/
-
-
+    }
 
     return gameObject;
 }

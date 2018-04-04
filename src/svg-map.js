@@ -26,7 +26,7 @@ export default class SVGMapLoader {
     }
 
     getCollisionShapes() {
-        var shapeElements = this.svg.select("#collision rect, #collision path, #collision polyline, #collision circle, #collision ellipse");
+        var shapeElements = this.svg.select("#collision rect, #collision path, #collision polyline, #collision polygon, #collision circle, #collision ellipse");
 
         var collisionShapes = [];
         shapeElements.each((i, child) => {
@@ -74,7 +74,7 @@ export default class SVGMapLoader {
             }
 
             return {cx, cy, width, height, vertices, rotation, type: "path"};
-        } else if (svgElement instanceof SVG.Polyline) {
+        } else if (svgElement instanceof SVG.Polyline || svgElement instanceof SVG.Polygon) {
             let vertices = [];
             let points = svgElement.array().value;
             let steps = 0.5;
@@ -85,7 +85,7 @@ export default class SVGMapLoader {
                 vertices.push(p);
             }
 
-            return {cx, cy, width, height, vertices, rotation, type: "polyline"};
+            return {cx, cy, width, height, vertices, rotation, type: "polygon"};
         }
     }
 }

@@ -81,7 +81,7 @@ Example.car = function() {
                 b = Matter.Bodies.rectangle(shape.cx, shape.cy, shape.width, shape.height, {angle: shape.rotation, isStatic: true});
             } else if (shape.type == "circle") {
                 b = Matter.Bodies.circle(shape.cx, shape.cy, shape.radius, {angle: shape.rotation, isStatic: true});
-            } else if (shape.type == "ellipse" || shape.type == "path" || shape.type == "polyline") {
+            } else if (shape.type == "ellipse" || shape.type == "path" || shape.type == "polygon") {
                 b = Bodies.fromVertices(shape.cx, shape.cy, shape.vertices, {isStatic: true, angle: shape.rotation});
 
                 Matter.Body.setPosition(b, Matter.Vertices.centre(shape.vertices));

@@ -71,28 +71,32 @@ Example.car = function() {
 
     var mapLoader = new SVGMapLoader("assets/maps/test.svg", function(loader) {
         var collisionShapes = loader.getCollisionShapes();
-
-        console.log(collisionShapes);
+        var parts = [];
+        var objs = [];
 
         for (let shape of collisionShapes) {
             var b = null;
+
             if (shape.type == "rect") {
-                b = Bodies.rectangle(shape.cx, shape.cy, shape.width, shape.height, {angle: shape.rotation, isStatic: true});
+                b = Matter.Bodies.rectangle(shape.cx, shape.cy, shape.width, shape.height, {angle: shape.rotation, isStatic: true});
             } else if (shape.type == "circle") {
-
-            } else if (shape.type == "path") {
+                b = Matter.Bodies.circle(shape.cx, shape.cy, shape.radius, {angle: shape.rotation, isStatic: true});
+            } else if (shape.type == "ellipse" || shape.type == "path" || shape.type == "polyline") {
                 b = Bodies.fromVertices(shape.cx, shape.cy, shape.vertices, {isStatic: true, angle: shape.rotation});
-            }  else if (shape.type == "polyline") {
-                b = Bodies.fromVertices(shape.cx, shape.cy, shape.vertices, {isStatic: true, angle: shape.rotation}, false, 0.01, 3);
 
-                //console.log(shape.vertices);
-                let c = Matter.Vertices.centre(shape.vertices);
-                Matter.Body.setPosition(b, c);
+                Matter.Body.setPosition(b, Matter.Vertices.centre(shape.vertices));
             }
 
-            Matter.World.addBody(physics, b);
-            world.addObject(new GameObject(b));
+            if (b != null) {
+                //parts.push(b);
+                //objs.push(new GameObject(b));
+                Matter.World.addBody(physics, b);
+                world.addObject(new GameObject(b));
+            }
         }
+
+        //var body = Matter.Body.create({parts, isStatic: true});
+
     });
 
     var left = false;

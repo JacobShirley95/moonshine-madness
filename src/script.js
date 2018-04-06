@@ -56,6 +56,7 @@ Example.car = function() {
 
     var renderer = new Renderer(-200, 200, 100, 300);
     renderer.scale(0.2);
+
     var world = new World(physics, renderer);
     var truck = new Truck(500, 0, 305, 1.0);
 
@@ -66,12 +67,9 @@ Example.car = function() {
 
     renderer.follow(truck.chassis.renderObj);
 
-    //world.addObject(new GameObject(slope, null));
-    //world.addObject(new GameObject(ramp, null));
-
     var mapLoader = new SVGMapLoader("assets/maps/test.svg");
 
-    var objLoader = new ObjectLoader(mapLoader);
+    var objLoader = new ObjectLoader(mapLoader, true);
     objLoader.load(physics, (object) => {
         world.addObject(object);
         world.debug(object);

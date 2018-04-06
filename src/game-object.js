@@ -25,7 +25,6 @@ function createDebug(b) {
 
         g.endStroke();
 
-
         var r = 20;
         g.beginFill("green").drawEllipse(-r / 2, -r / 2, r, r).endFill();
 

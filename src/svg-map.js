@@ -27,30 +27,32 @@ export default class SVGMapLoader {
     }
 
     load(callback) {
-        if (this.svg) {
+        if (this.svg && this.texture) {
             callback(this);
             return;
         }
-
         $.get(this.svgFile, (result) => {
             this.svg = SVG(this.svgElement).svg(result);
-            callback(this);
+
+            this.texture = document.createElement("canvas");
+            var bounds = this.bounds();
+            this.texture.setAttribute("width", bounds.width);
+            this.texture.setAttribute("height", bounds.height);
+
+            var ctx = this.texture.getContext('2d');
+
+            var img = new Image();
+            img.src = this.svgFile;
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0, bounds.width, bounds.height);
+
+                callback(this);
+            };
         }, "text");
     }
 
-    getTexture(callback) {
-        var canvas = document.createElement("canvas");
-        var bounds = this.bounds();
-        canvas.setAttribute("width", bounds.width);
-        canvas.setAttribute("height", bounds.height);
-        var ctx = canvas.getContext('2d');
-
-        var img = new Image();
-        img.src = this.svgFile;
-        img.onload = () => {
-            ctx.drawImage(img, 0, 0, bounds.width, bounds.height);
-            callback(canvas);
-        };
+    getTexture() {
+        return this.texture;
     }
 
     bounds() {

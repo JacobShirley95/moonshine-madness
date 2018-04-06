@@ -1,19 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="collision" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 10000 10000" style="enable-background:new 0 0 10000 10000;" xml:space="preserve">
+	 viewBox="4550 -4845 10000 10000" style="enable-background:new 4550 -4845 10000 10000;" xml:space="preserve">
 <style type="text/css">
 	.st0{fill:#00AEEF;stroke:#000000;stroke-miterlimit:10;}
 	.st1{stroke:#BE1E2D;stroke-miterlimit:10;}
+	.st2{fill:#E80A0A;stroke:#000000;stroke-miterlimit:10;}
 </style>
-<rect id="XMLID_1_" x="-896.9" y="3615" transform="matrix(0.7581 0.6521 -0.6521 0.7581 3208.603 -1158.0619)" class="st0" width="8124.6" height="262.5"/>
-<rect id="XMLID_2_" x="4271.3" y="5034.4" transform="matrix(0.9378 0.3472 -0.3472 0.9378 2111.8408 -1400.8201)" class="st0" width="1387.6" height="317"/>
-<polyline id="XMLID_3_" class="st1" points="4794.8,4510.3 4258.1,4663.7 3586.9,3944.4 "/>
-<path id="XMLID_4_" class="st1" d="M2561.8,4313.4l-720.5,22.1l-261.5-255.7l-42.6-526.2C1537.4,3553.5,1972.7,4246.7,2561.8,4313.4
-	z"/>
-<circle id="XMLID_5_" class="st1" cx="3113.7" cy="2153.9" r="254.9"/>
-<ellipse id="XMLID_6_" class="st1" cx="1899" cy="1833" rx="207" ry="320.9"/>
-<polygon id="XMLID_7_" class="st0" points="4428.7,2957.4 4482.1,2479.6 4922.6,2286.8 5309.8,2572 5256.4,3049.9 4815.9,3242.6 "/>
+<rect id="XMLID_1_" x="3653.2" y="-1230.1" transform="matrix(-0.7581 -0.6521 0.6521 -0.7581 14281.1182 3099.366)" class="st0" width="8124.4" height="262.5"/>
+<rect id="XMLID_2_" x="8821.3" y="189.5" transform="matrix(-0.9378 -0.3472 0.3472 -0.9378 18317.5449 3977.9102)" class="st0" width="1387.6" height="317"/>
+<polyline id="XMLID_3_" class="st1" points="9344.8,-334.7 8808.1,-181.3 8136.9,-900.6 "/>
+<path id="XMLID_4_" class="st1" d="M7111.8-531.6l-720.5,22.1l-261.5-255.7l-42.6-526.2C6087.4-1291.5,6522.7-598.3,7111.8-531.6z"
+	/>
+<circle id="XMLID_5_" class="st1" cx="7663.7" cy="-2691.1" r="254.9"/>
+<ellipse id="XMLID_6_" class="st1" cx="6449" cy="-3012" rx="207" ry="320.9"/>
+<polygon id="XMLID_7_" class="st0" points="8978.7,-1887.6 9032.1,-2365.4 9472.6,-2558.2 9859.8,-2273 9806.4,-1795.1 
+	9365.9,-1602.4 "/>
 <g id="Layer_2">
 </g>
+<path class="st2" d="M10394.7,413h-1280c-74.8,0-136-61.2-136-136V33c0-74.8,61.2-136,136-136h1280c74.8,0,136,61.2,136,136v244
+	C10530.7,351.8,10469.5,413,10394.7,413z"/>
 </svg>

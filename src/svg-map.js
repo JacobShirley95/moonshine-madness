@@ -1,8 +1,4 @@
 function ellipseVertices(x, y, rx, ry, step) {
-    var rxSquared = rx * rx;
-    var rySquared = ry * ry;
-    var rSquared = (rx + ry) * (rx + ry);
-
     var vertices = [];
 
     for (let i = -Math.PI; i < Math.PI; i += step) {
@@ -35,15 +31,16 @@ export default class SVGMapLoader {
 
         $.get(this.svgFile, (result) => {
             this.svg = SVG(this.svgElement).svg(result);
+            this.svgElement = this.svg.select("svg").first();
+
             var scale = this.options.scale;
             var bounds = this.bounds();
 
             var w = bounds.width * scale;
             var h = bounds.height * scale;
 
+            this.bounds(0, 0, w, h);
             this.svg.size(w, h);
-
-            console.log(bounds.width);
 
             this.texture = document.createElement("canvas");
             this.texture.setAttribute("width", w);
@@ -66,7 +63,7 @@ export default class SVGMapLoader {
     }
 
     bounds() {
-        return this.svg.select("svg").first().viewbox();
+        return this.svgElement.viewbox();
     }
 
     getCollisionShapes() {
@@ -82,6 +79,10 @@ export default class SVGMapLoader {
 
     getShape(svgElement) {
         var scale = this.options.scale;
+        var bounds = this.bounds();
+
+        svgElement.dx(-bounds.x);
+        svgElement.dy(-bounds.y);
 
         var width = svgElement.width() * scale;
         var height = svgElement.height() * scale;
@@ -103,7 +104,7 @@ export default class SVGMapLoader {
             let rx = svgElement.attr('rx') * scale;
             let ry = svgElement.attr('ry') * scale;
 
-            let vertices = ellipseVertices(cx, cy, rx, ry, 0.1);
+            let vertices = ellipseVertices(cx, cy, rx, ry, 2 / Math.max(rx, ry));
 
             return {cx, cy, rx, ry, vertices, rotation, type: "ellipse"};
         } else if (svgElement instanceof SVG.Path) {
@@ -118,11 +119,13 @@ export default class SVGMapLoader {
                 vertices.push(p);
             }
 
+            //console.log("SDFSDF");
+
             return {cx, cy, width, height, vertices, rotation, type: "path"};
         } else if (svgElement instanceof SVG.Polyline || svgElement instanceof SVG.Polygon) {
             let vertices = [];
             let points = svgElement.array().value;
-            let steps = 0.5;
+            let steps = 0.2;
 
             for (let i = 0; i < points.length; i++) {
                 let p = {x: points[i][0], y: points[i][1]};

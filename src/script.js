@@ -67,22 +67,29 @@ Example.car = function() {
 
     renderer.follow(truck.chassis.renderObj);
 
-    var mapLoader = new SVGMapLoader("assets/maps/test.svg");
+    var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: 1});
 
-    var objLoader = new ObjectLoader(mapLoader, true);
+    var objLoader = new ObjectLoader(mapLoader, {isStatic: true});
     objLoader.load(physics, (object) => {
         world.addObject(object);
         world.debug(object);
     });
 
-    var wheel = new ObjectLoader(new SVGMapLoader("assets/maps/test-wheel.svg", {scale: 5}), false);
+    var wheel = new ObjectLoader(new SVGMapLoader("assets/maps/test-wheel.svg", {scale: 5}), {friction: 0.5, mass: 1000, isStatic: false});
     wheel.load(physics, (object) => {
-        console.log(wheel.physicsObj.isStatic);
-        //wheel.scale(5);
         wheel.translate({x: 1000, y: 1000});
         world.addObject(object);
         world.debug(object);
     });
+
+    /*var body = new ObjectLoader(new SVGMapLoader("assets/maps/truck-body.svg", {scale: 1}), false);
+    body.load(physics, (object) => {
+        body.flipX();
+        //wheel.scale(2);
+        body.translate({x: 1000, y: 1000});
+        world.addObject(object);
+        world.debug(object);
+    });*/
 
     world.addObject(truck);
     world.debug(truck);

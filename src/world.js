@@ -16,17 +16,14 @@ export default class World {
         if (gameObject.renderObj != null)
             this.renderer.addObject(gameObject.renderObj);
 
-        if (gameObject.debugShape != null)
-            this.addObject(gameObject.debugShape);
-
         this.gameObjects.push(gameObject);
     }
 
-    debug(flag) {
-        this.debug = flag;
+    debug(gO) {
+        this.addObject(gO.createDebugObject());
 
-        for (let gO of this.gameObjects) {
-            gO.debug(flag);
+        for (let sub of gO.gameObjects) {
+            this.addObject(sub.createDebugObject());
         }
     }
 

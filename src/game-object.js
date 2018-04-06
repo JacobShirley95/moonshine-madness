@@ -1,5 +1,5 @@
 function addAngles(body) {
-    if (body.parent != body) {
+    if (body.parent != null && body.parent != body) {
         return body.angle + addAngles(body.parent);
     }
 
@@ -24,6 +24,11 @@ function createDebug(b) {
         }
 
         g.endStroke();
+
+
+        var r = 20;
+        g.beginFill("green").drawEllipse(-r / 2, -r / 2, r, r).endFill();
+
         s._static = body.isStatic;
 
         return s;
@@ -31,7 +36,6 @@ function createDebug(b) {
 
     var gameObject = new GameObject();
     gameObject.physicsObj = b;
-    //gameObject.renderObj = drawBody(b);
 
     if (b.parts.length > 1) {
         var container = new createjs.Container();
@@ -61,17 +65,6 @@ export default class GameObject {
         this.physicsObj = physicsObj;
         this.renderObj = renderObj;
         this.gameObjects = gameObjects || [];
-
-        if (physicsObj && physicsObj.type == "body")
-            this.debugShape = createDebug(physicsObj);
-    }
-
-    debug(flag) {
-        if (this.debugShape)
-            this.debugShape.renderObj.visible = flag;
-
-        for (let gO of this.gameObjects)
-            gO.debug(flag);
     }
 
     flipX(onlyRenderObj) {
@@ -104,6 +97,10 @@ export default class GameObject {
         }
     }
 
+    position() {
+        return this.physicsObj.position;
+    }
+
     applyForce(force, from) {
         Matter.Body.applyForce(this.physicsObj, force, from);
     }
@@ -112,29 +109,22 @@ export default class GameObject {
         this.physicsObj.torque = torque;
     }
 
-    getDebug() {
-        return this.debugShape;
-    }
-
     setVisible(flag) {
         this.renderObj.visible = flag;
     }
 
+    createDebugObject() {
+        return createDebug(this.physicsObj);
+    }
+
     update() {
-        /*if (this.debugShape) {
-            this.debugShape.x = this.physicsObj.position.x;
-            this.debugShape.y = this.physicsObj.position.y;
-
-            if (!this.physicsObj.isStatic) {
-                this.debugShape.rotation = Math.degrees(addAngles(this.physicsObj));
-            }
-        }*/
-
         if (this.renderObj == null)
             return;
 
-        this.renderObj.x = this.physicsObj.position.x;
-        this.renderObj.y = this.physicsObj.position.y;
+        let pos = this.position();
+
+        this.renderObj.x = pos.x;
+        this.renderObj.y = pos.y;
 
         if (!this.physicsObj.isStatic) {
             this.renderObj.rotation = Math.degrees(addAngles(this.physicsObj));

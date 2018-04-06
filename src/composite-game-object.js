@@ -13,10 +13,10 @@ export default class CompositeGameObject extends GameObject {
         body.torque = torque;
     }
 
-    centre() {
+    position() {
         var bounds = Matter.Composite.bounds(this.physicsObj);
 
-        return {x: bounds.min.x + bounds.max.x / 2, y: bounds.min.y + bounds.max.y / 2};
+        return {x: (bounds.min.x + bounds.max.x) / 2, y: (bounds.min.y + bounds.max.y) / 2};
     }
 
     flipX(onlyRenderObj) {
@@ -43,5 +43,16 @@ export default class CompositeGameObject extends GameObject {
                 c.pointB.y *= -1;
             }
         }
+    }
+
+    createDebugObject() {
+        var bounds = Matter.Composite.bounds(this.physicsObj);
+        var shape = new createjs.Shape();
+
+        var centre = this.position();
+
+        shape.graphics.beginStroke("red").drawRect(bounds.min.x - centre.x, bounds.min.y - centre.y, bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y).endStroke();
+
+        return new CompositeGameObject(this.physicsObj, null);
     }
 }

@@ -18,15 +18,49 @@ function ellipseVertices(x, y, rx, ry, step) {
 export default class SVGMapLoader {
     constructor(svgFile, callback) {
         this.svgFile = svgFile;
+        this.svgElement = document.createElement("svg");
 
-        $.get(svgFile, (result) => {
-            this.svg = SVG(document.createElement("svg")).svg(result);
+        //document.body.appendChild(this.svgElement);
+
+        if (callback)
+            this.load(callback);
+    }
+
+    load(callback) {
+        if (this.svg) {
+            callback(this);
+            return;
+        }
+
+        $.get(this.svgFile, (result) => {
+            this.svg = SVG(this.svgElement).svg(result);
             callback(this);
         }, "text");
     }
 
+    getTexture(callback) {
+        var canvas = document.createElement("canvas");
+        var bounds = this.bounds();
+        canvas.setAttribute("width", bounds.width);
+        canvas.setAttribute("height", bounds.height);
+        var ctx = canvas.getContext('2d');
+
+        var img = new Image();
+        img.src = this.svgFile;
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, bounds.width, bounds.height);
+            callback(canvas);
+        };
+    }
+
+    bounds() {
+        return this.svg.select("#collision").first().viewbox();
+    }
+
     getCollisionShapes() {
-        var shapeElements = this.svg.select("#collision rect, #collision path, #collision polyline, #collision polygon, #collision circle, #collision ellipse");
+        var shapeElements = this.svg.select("#collision rect, #collision path, #collision line, #collision polyline, #collision polygon, #collision circle, #collision ellipse");
+
+        this.svg.size(10000, 10000);
 
         var collisionShapes = [];
         shapeElements.each((i, child) => {
@@ -63,10 +97,7 @@ export default class SVGMapLoader {
         } else if (svgElement instanceof SVG.Path) {
             let vertices = [];
             let length = svgElement.length();
-            let steps = 0.5;
-
-            let x = svgElement.x();
-            let y = svgElement.y();
+            let steps = 0.2;
 
             for (let i = 0; i < length; i += steps) {
                 let p = svgElement.pointAt(i);
@@ -86,6 +117,22 @@ export default class SVGMapLoader {
             }
 
             return {cx, cy, width, height, vertices, rotation, type: "polygon"};
+        } else if (svgElement instanceof SVG.Line) {
+            let x = svgElement.x();
+            let y = svgElement.y();
+
+            let x2 = svgElement.attr('x2');
+            let y2 = svgElement.attr('y2');
+
+            let vertices = [];
+
+            vertices.push({x: x, y: y});
+            vertices.push({x: x2, y: y2});
+
+            vertices.push({x: x + 1, y: y + 1});
+            vertices.push({x: x2 + 1, y: y2 + 1});
+
+            return {cx, cy, x, y, width, height, vertices, rotation, type: "line"};
         }
     }
 }

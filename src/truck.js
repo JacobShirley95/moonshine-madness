@@ -132,7 +132,7 @@ export default class Truck extends CompositeGameObject {
         this.wheels.push(gO);
     }
 
-    load(physics, world) {
+    load(physics) {
         Matter.Composite.addBody(this.carComposite, this.body.physicsObj);
         Matter.World.add(physics, this.carComposite);
 

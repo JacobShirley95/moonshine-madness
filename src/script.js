@@ -3,6 +3,7 @@ import GameObject from "./game-object.js";
 import Renderer from "./renderer.js";
 import World from "./world.js";
 import SVGMapLoader from "./svg-map.js";
+import ObjectLoader from "./object-loader.js";
 
 var Example = Example || {};
 
@@ -67,37 +68,17 @@ Example.car = function() {
 
     //world.addObject(new GameObject(slope, null));
     //world.addObject(new GameObject(ramp, null));
-    world.addObject(truck);
 
-    var mapLoader = new SVGMapLoader("assets/maps/test.svg", function(loader) {
-        var collisionShapes = loader.getCollisionShapes();
-        var parts = [];
-        var objs = [];
+    var mapLoader = new SVGMapLoader("assets/maps/test.svg");
 
-        for (let shape of collisionShapes) {
-            var b = null;
-
-            if (shape.type == "rect") {
-                b = Matter.Bodies.rectangle(shape.cx, shape.cy, shape.width, shape.height, {angle: shape.rotation, isStatic: true});
-            } else if (shape.type == "circle") {
-                b = Matter.Bodies.circle(shape.cx, shape.cy, shape.radius, {angle: shape.rotation, isStatic: true});
-            } else if (shape.type == "ellipse" || shape.type == "path" || shape.type == "polygon") {
-                b = Bodies.fromVertices(shape.cx, shape.cy, shape.vertices, {isStatic: true, angle: shape.rotation});
-
-                Matter.Body.setPosition(b, Matter.Vertices.centre(shape.vertices));
-            }
-
-            if (b != null) {
-                //parts.push(b);
-                //objs.push(new GameObject(b));
-                Matter.World.addBody(physics, b);
-                world.addObject(new GameObject(b));
-            }
-        }
-
-        //var body = Matter.Body.create({parts, isStatic: true});
-
+    var objLoader = new ObjectLoader(mapLoader);
+    objLoader.load(physics, (object) => {
+        world.addObject(object);
+        world.debug(object);
     });
+
+    world.addObject(truck);
+    world.debug(truck);
 
     var left = false;
     var right = false;
@@ -124,7 +105,6 @@ Example.car = function() {
     });
 
     var debug = document.getElementById("debug");
-    world.debug(debug);
 
     function draw() {
         debug.innerHTML = "RenderX: " + Math.round(renderer.renderX)+"px" + "<br />RenderY: " + Math.round(renderer.renderY)+"px";

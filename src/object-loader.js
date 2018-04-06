@@ -5,7 +5,7 @@ export default class ObjectLoader extends GameObject {
         super();
 
         this.loader = loader;
-        this.isStatic = isStatic || false;
+        this.isStatic = isStatic;
         this.collisionShapes = [];
     }
 
@@ -39,14 +39,14 @@ export default class ObjectLoader extends GameObject {
             }
 
             if (b != null) {
-                Matter.World.addBody(physics, b);
                 bodies.push(b);
 
                 this.gameObjects.push(new GameObject(b));
             }
         }
 
-        this.physicsObj = Matter.Body.create({isStatic: this.isStatic});
+        this.physicsObj = Matter.Body.create({parts: bodies, isStatic: this.isStatic});
+        Matter.World.addBody(physics, this.physicsObj);
 
         var bitmap = new createjs.Bitmap(this.loader.getTexture());
         var centre = this.position();

@@ -116,6 +116,20 @@ export default class GameObject {
         return createDebug(this.physicsObj);
     }
 
+    scale(sc) {
+        this.renderObj.scaleX *= sc;
+        this.renderObj.scaleY *= sc;
+        Matter.Body.scale(this.physicsObj, sc, sc);
+    }
+
+    translate(vec) {
+        Matter.Body.translate(this.physicsObj, vec);
+    }
+
+    setPosition(pos) {
+        Matter.Body.setPosition(this.physicsObj, pos);
+    }
+
     update() {
         if (this.renderObj == null)
             return;

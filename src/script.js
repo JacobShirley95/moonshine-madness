@@ -75,6 +75,15 @@ Example.car = function() {
         world.debug(object);
     });
 
+    var wheel = new ObjectLoader(new SVGMapLoader("assets/maps/test-wheel.svg", {scale: 5}), false);
+    wheel.load(physics, (object) => {
+        console.log(wheel.physicsObj.isStatic);
+        //wheel.scale(5);
+        wheel.translate({x: 1000, y: 1000});
+        world.addObject(object);
+        world.debug(object);
+    });
+
     world.addObject(truck);
     world.debug(truck);
 

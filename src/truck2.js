@@ -1,60 +1,26 @@
 const CHASSIS_WIDTH = 450;
 
 import GameObject from "./game-object.js";
+import SVGMapLoader from "./svg-map.js";
+import ObjectLoader from "./object-loader.js";
 import CompositeGameObject from "./composite-game-object.js";
 
 export default class Truck extends CompositeGameObject {
     constructor(x, y, scale) {
         super();
 
+        this.x = x;
+        this.y = y;
+
         this.scale = scale;
         this.wheels = [];
+        this._wheelProperties = [];
 
         this.colGroup = Matter.Body.nextGroup(true);
-        this.carComposite = Matter.Composite.create({ label: 'Car' });
+        this.carComposite = Matter.Composite.create({ label: 'Truck' });
 
-        var chassis = Matter.Bodies.rectangle(x, y, CHASSIS_WIDTH, 50, {
-            density: 0.02,
-            friction: 0.7
-        });
-        Matter.Body.setMass(chassis, 380);
-
-        var body2 = new createjs.Bitmap("assets/textures/car_body.png");
-        body2.scaleX = 0.5;
-        body2.scaleY = 0.5;
-        body2.regX = 451.5;
-        body2.regY = 155 + 95;
-
-        this.chassis = new GameObject(chassis, body2);
-
-        var cargo = Matter.Bodies.rectangle(x - 120, y - 50, 130, 40, {
-            density: 0.02
-        });
-        Matter.Body.setMass(cargo, 200);
-
-        this.cargo = new GameObject(cargo, null);
-
-        var cargoDoor = Matter.Bodies.rectangle(x + (CHASSIS_WIDTH * 0.5), y - 70, 10, 100, {
-            density: 0.02
-        });
-        Matter.Body.setMass(cargoDoor, 20);
-
-        this.cargoDoor = new GameObject(cargoDoor, null);
-
-        var cabin = Matter.Bodies.rectangle(x - 10, y - 70, 100, 100, {
-            density: 0.02
-        });
-        Matter.Body.setMass(cabin, 300);
-
-        this.cabin = new GameObject(cabin, null);
-
-        var body = Matter.Body.create({
-            parts: [chassis, cargo, cargoDoor, cabin],
-            collisionFilter: { group: this.colGroup },
-        });
-
-        this.body = new GameObject(body, null, this.chassis, this.cargo, this.cargoDoor, this.cabin);
-        this.gameObjects.push(this.body);
+        var svgLoader = new SVGMapLoader("assets/maps/truck-body.svg");
+        this.body = new ObjectLoader(svgLoader, {mass: 1580, density: 0.02, collisionFilter: {group: this.colGroup}});
     }
 
     bounds() {
@@ -84,49 +50,60 @@ export default class Truck extends CompositeGameObject {
     }
 
     addWheel(offsetX, offsetY, radius, suspensionDamping, suspensionStiffness, friction) {
-        var pos = this.position();
-        var chassisCen = this.chassisCentre();
-        var diff = Matter.Vector.sub(chassisCen, pos);
-
-        var wheel = Matter.Bodies.circle(pos.x + offsetX, pos.y + offsetY, radius, {
-            collisionFilter: { group: this.colGroup },
-            friction: friction,
-            density: 0.02,
-            frictionStatic: 0.7
-        });
-
-        var axel = Matter.Constraint.create({
-            bodyB: this.body.physicsObj,
-            pointB: { x: diff.x + offsetX, y: diff.y + offsetY },
-            bodyA: wheel,
-            stiffness: suspensionStiffness,
-            damping: suspensionDamping,
-            length: 0
-        });
-
-        Matter.Composite.addBody(this.carComposite, wheel);
-        Matter.Composite.addConstraint(this.carComposite, axel);
-
-        Matter.Body.setMass(wheel, 60);
-
-        var wheelBitmap = new createjs.Bitmap("assets/textures/wheel_01.png");
-        wheelBitmap.scale = 0.5;
-        wheelBitmap.regX = 82.5;
-        wheelBitmap.regY = 82.5;
-
-        var gO = new GameObject(wheel, wheelBitmap);
-        this.gameObjects.push(gO);
-        this.wheels.push(gO);
+        this._wheelProperties.push({offsetX, offsetY, radius, suspensionDamping, suspensionStiffness, friction});
     }
 
-    load(physics) {
-        Matter.Composite.addBody(this.carComposite, this.body.physicsObj);
-        Matter.World.add(physics, this.carComposite);
+    load(physics, callback) {
+        this.body.load(physics, (body) => {
+            this.gameObjects.push(this.body);
 
-        this.physicsObj = this.carComposite;
+            Matter.Body.setPosition(this.body.physicsObj, {x: this.x, y: this.y});
+            Matter.Composite.addBody(this.carComposite, this.body.physicsObj);
 
-        this.com = new createjs.Shape();
-        this.com.graphics.beginFill("green").drawRect(0, 0, 15, 15).endFill();
+            for (let props of this._wheelProperties) {
+                let pos = this.position();
+
+                let wheel = Matter.Bodies.circle(pos.x + props.offsetX, pos.y + props.offsetY, props.radius, {
+                    collisionFilter: { group: this.colGroup },
+                    friction: props.friction,
+                    density: 0.02,
+                    frictionStatic: 0.2
+                });
+
+                let axel = Matter.Constraint.create({
+                    bodyB: this.body.physicsObj,
+                    pointB: { x: props.offsetX, y: props.offsetY },
+                    bodyA: wheel,
+                    stiffness: props.suspensionStiffness,
+                    damping: props.suspensionDamping,
+                    length: 0
+                });
+
+                Matter.Composite.addBody(this.carComposite, wheel);
+                Matter.Composite.addConstraint(this.carComposite, axel);
+
+                Matter.Body.setMass(wheel, 60);
+
+                let wheelBitmap = new createjs.Bitmap("assets/textures/wheel_01.png");
+                wheelBitmap.scale = 1;
+                wheelBitmap.regX = 82.5;
+                wheelBitmap.regY = 82.5;
+
+                let gO = new GameObject(wheel, wheelBitmap);
+                this.gameObjects.push(gO);
+                this.wheels.push(gO);
+            }
+
+            Matter.World.add(physics, this.carComposite);
+
+            this.physicsObj = this.carComposite;
+
+            this.com = new createjs.Shape();
+            this.com.graphics.beginFill("green").drawRect(0, 0, 15, 15).endFill();
+
+            callback(this);
+        });
+
         //world.renderer.addObject(this.com);
     }
 

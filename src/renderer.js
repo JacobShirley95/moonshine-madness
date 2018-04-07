@@ -2,6 +2,8 @@ export default class Renderer {
     constructor(minX, maxX, minY, maxY) {
         this.stage = new createjs.Stage("game");
 
+        this.scalee = 1;
+
         this.renderX = 0;
         this.renderY = 0;
 
@@ -17,6 +19,7 @@ export default class Renderer {
     }
 
     scale(sc) {
+        this.scalee = sc;
         this.stage.scaleX *= this.stage.scaleY = sc;
     }
 
@@ -50,11 +53,11 @@ export default class Renderer {
         }
 
         if (this.target != null) {
-            minX = Math.min(minX, this.target.x);
-            maxX = Math.max(maxX, this.target.x);
+            minX = Math.min(minX, this.target.x * this.stage.scaleX);
+            maxX = Math.max(maxX, this.target.x * this.stage.scaleX);
 
-            minY = Math.min(minY, this.target.y);
-            maxY = Math.max(maxY, this.target.y);
+            minY = Math.min(minY, this.target.y * this.stage.scaleY);
+            maxY = Math.max(maxY, this.target.y * this.stage.scaleY);
         }
 
         if (minX < this.minX) {

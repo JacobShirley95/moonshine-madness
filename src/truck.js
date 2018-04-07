@@ -15,7 +15,10 @@ export default class Truck extends CompositeGameObject {
 
         var chassis = Matter.Bodies.rectangle(x, y, CHASSIS_WIDTH, 50, {
             density: 0.02,
-            friction: 0.7
+            friction: 0.7,
+            chamfer: {
+                radius: 25
+            },
         });
         Matter.Body.setMass(chassis, 380);
 
@@ -27,12 +30,15 @@ export default class Truck extends CompositeGameObject {
 
         this.chassis = new GameObject(chassis, body2);
 
-        var cargo = Matter.Bodies.rectangle(x - 120, y - 50, 130, 40, {
-            density: 0.02
+        var engine = Matter.Bodies.rectangle(x - 120, y - 50, 130, 40, {
+            density: 0.02,
+            chamfer: {
+                radius: 5
+            }
         });
-        Matter.Body.setMass(cargo, 200);
+        Matter.Body.setMass(engine, 200);
 
-        this.cargo = new GameObject(cargo, null);
+        this.engine = new GameObject(engine, null);
 
         var cargoDoor = Matter.Bodies.rectangle(x + (CHASSIS_WIDTH * 0.5), y - 70, 10, 100, {
             density: 0.02
@@ -49,11 +55,11 @@ export default class Truck extends CompositeGameObject {
         this.cabin = new GameObject(cabin, null);
 
         var body = Matter.Body.create({
-            parts: [chassis, cargo, cargoDoor, cabin],
+            parts: [chassis, engine, cargoDoor, cabin],
             collisionFilter: { group: this.colGroup },
         });
 
-        this.body = new GameObject(body, null, this.chassis, this.cargo, this.cargoDoor, this.cabin);
+        this.body = new GameObject(body, null, this.chassis, this.engine, this.cargoDoor, this.cabin);
         this.gameObjects.push(this.body);
     }
 

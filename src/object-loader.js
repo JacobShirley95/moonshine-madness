@@ -14,16 +14,19 @@ export default class ObjectLoader extends GameObject {
         this.loader.load( (loader) => {
             this.collisionShapes = loader.getCollisionShapes();
 
-            this.create(physics, this.collisionShapes);
+            this.create(this.collisionShapes);
             callback(this);
         });
     }
 
-    create(physics, collisionShapes) {
+    create(collisionShapes) {
         var bodies = [];
         for (let shape of collisionShapes) {
             var b = null;
             let options = Object.assign({angle: shape.rotation}, this.options);
+            delete options.position;
+            delete options.mass;
+            delete options.collisionFilter;
 
             if (shape.type == "rect") {
                 b = Matter.Bodies.rectangle(shape.cx, shape.cy, shape.width, shape.height, options);
@@ -34,12 +37,13 @@ export default class ObjectLoader extends GameObject {
             } else if (shape.type == "ellipse" || shape.type == "polygon" || shape.type == "path") {
                 b = Matter.Bodies.fromVertices(shape.cx, shape.cy, shape.vertices, options);
 
-                var bounds = Matter.Bounds.create(shape.vertices);
+                let bounds = Matter.Bounds.create(shape.vertices);
                 let diff = Matter.Vector.sub(bounds.min, b.bounds.min);
                 Matter.Body.translate(b, diff);
             }
 
             if (b != null) {
+                //Matter.Body.setMass(b, this.options.mass);
                 bodies.push(b);
 
                 this.gameObjects.push(new GameObject(b));
@@ -47,15 +51,16 @@ export default class ObjectLoader extends GameObject {
         }
 
         let options = Object.assign({parts: bodies}, this.options);
+        delete options.position;
+        delete options.mass;
 
         this.physicsObj = Matter.Body.create(options);
-        if (options.position)
-            Matter.Body.setPosition(this.physicsObj, options.position);
 
-        if (typeof options.mass !== 'undefined')
-            Matter.Body.setMass(this.physicsObj, options.mass);
+        //if (this.options.position)
+        //    Matter.Body.setPosition(this.physicsObj, this.options.position);
 
-        Matter.World.addBody(physics, this.physicsObj);
+        if (typeof this.options.mass !== 'undefined')
+            Matter.Body.setMass(this.physicsObj, this.options.mass);
 
         var bitmap = new createjs.Bitmap(this.loader.getTexture());
         var centre = this.position();

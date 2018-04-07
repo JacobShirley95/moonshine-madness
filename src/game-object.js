@@ -108,8 +108,13 @@ export default class GameObject {
         this.physicsObj.torque = torque;
     }
 
+    setAngularVelocity(vel) {
+        Matter.Body.setAngularVelocity(this.physicsObj, vel);
+    }
+
     setVisible(flag) {
-        this.renderObj.visible = flag;
+        if (this.renderObj)
+            this.renderObj.visible = flag;
     }
 
     createDebugObject() {

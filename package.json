@@ -11,6 +11,7 @@
   "dependencies": {
     "canvg": "^1.0.0",
     "easeljs": "^1.0.2",
+    "eventemitter3": "^3.0.1",
     "jquery": "^3.3.1",
     "matter-js": "^0.14.1",
     "poly-decomp": "^0.2.1",

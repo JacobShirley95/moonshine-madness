@@ -1,4 +1,4 @@
-import Truck from "./truck.js";
+import Truck from "./truck2.js";
 import GameObject from "./game-object.js";
 import Renderer from "./renderer.js";
 import World from "./world.js";
@@ -54,45 +54,41 @@ Example.car = function() {
 
     const BLOCKS = 5;
 
-    var renderer = new Renderer(-200, 200, 100, 300);
-    renderer.scale(0.2);
+    var renderer = new Renderer(200, 200, 200, 300);
+    renderer.scale(0.5);
 
     var world = new World(physics, renderer);
-    var truck = new Truck(500, 0, 305, 1.0);
+    var truck = new Truck(500, 50, 305, 1.0);
 
-    truck.addWheel(-150, 40, 40, 0.2, 0.1, 0.8);
-    truck.addWheel(110, 40, 40, 0.2, 0.1, 0.8);
-    truck.load(physics, world);
-    truck.flipX();
-
-    renderer.follow(truck.chassis.renderObj);
+    truck.addWheel(-290, 140, 82.5, 0.2, 0.1, 0.8);
+    truck.addWheel(225, 140, 82.5, 0.2, 0.1, 0.8);
+    truck.load(physics, () => {
+        truck.flipX();
+        world.addObject(truck);
+        world.debug(truck);
+        renderer.follow(truck.body.renderObj);
+    });
 
     var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: 1});
 
     var objLoader = new ObjectLoader(mapLoader, {isStatic: true});
     objLoader.load(physics, (object) => {
+        Matter.World.add(physics, object.physicsObj);
         world.addObject(object);
         world.debug(object);
     });
 
-    var wheel = new ObjectLoader(new SVGMapLoader("assets/maps/test-wheel.svg", {scale: 5}), {friction: 0.5, mass: 1000, isStatic: false});
-    wheel.load(physics, (object) => {
-        wheel.translate({x: 1000, y: 1000});
-        world.addObject(object);
-        world.debug(object);
-    });
+    /*var l = new SVGMapLoader("assets/maps/test-wheel.svg", {scale: 5});
 
-    /*var body = new ObjectLoader(new SVGMapLoader("assets/maps/truck-body.svg", {scale: 1}), false);
-    body.load(physics, (object) => {
-        body.flipX();
-        //wheel.scale(2);
-        body.translate({x: 1000, y: 1000});
-        world.addObject(object);
-        world.debug(object);
-    });*/
+    for (let i = 0; i < 5; i++) {
+        let wheel = new ObjectLoader(l, {friction: 0.5, mass: 1000, isStatic: false});
 
-    world.addObject(truck);
-    world.debug(truck);
+        wheel.load(physics, (object) => {
+            wheel.translate({x: 1000, y: 1000});
+            world.addObject(object);
+            world.debug(object);
+        });
+    }*/
 
     var left = false;
     var right = false;
@@ -131,7 +127,7 @@ Example.car = function() {
         }
 
         if (stop) {
-            Matter.Body.setAngularVelocity(truck.wheels[1].physicsObj, 0);
+            truck.wheels[1].setAngularVelocity(0);
         }
 
         //truck.update();

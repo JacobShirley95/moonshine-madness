@@ -15,6 +15,8 @@ export default class ObjectLoader extends GameObject {
             this.collisionShapes = loader.getCollisionShapes();
 
             this.create(this.collisionShapes);
+            this.addTexture(loader.getTexture());
+
             callback(this);
         });
     }
@@ -61,8 +63,10 @@ export default class ObjectLoader extends GameObject {
 
         if (typeof this.options.mass !== 'undefined')
             Matter.Body.setMass(this.physicsObj, this.options.mass);
+    }
 
-        var bitmap = new createjs.Bitmap(this.loader.getTexture());
+    addTexture(tex) {
+        var bitmap = new createjs.Bitmap(tex);
         var centre = this.position();
 
         bitmap.regX += centre.x;

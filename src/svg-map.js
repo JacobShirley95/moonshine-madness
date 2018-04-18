@@ -37,37 +37,40 @@ export default class SVGMapLoader extends EventEmitter {
             this.svg = SVG(this.svgElement).svg(result);
             this.svgFirst = this.svg.select("svg").first();
 
-            var scale = this.options.scale;
-            var bounds = this.bounds();
+            var bounds = this.bounds(true);
+            var w = bounds.width;
+            var h = bounds.height;
 
-            var w = bounds.width * scale;
-            var h = bounds.height * scale;
-
-            this.bounds(0, 0, w, h);
+            this.svg.transform({x: bounds.x, y: bounds.y});
             this.svg.size(w, h);
+            this.img = new Image();
+            this.img.src = "data:image/svg+xml;utf8," + this.svg.svg();
 
-            this.texture = document.createElement("canvas");
-            this.texture.setAttribute("width", w);
-            this.texture.setAttribute("height", h);
-
-            var ctx = this.texture.getContext('2d');
-
-            var img = new Image();
-            img.src = this.svgFile;
-            img.onload = () => {
-                ctx.drawImage(img, 0, 0, w, h);
-
-                this.emit("load", this);
-            };
+            this.emit("load", this);
         }, "text");
     }
 
-    getTexture() {
-        return this.texture;
+    getTexture(x, y, width, height) {
+        if (typeof x !== 'undefined') {
+            let bnds = this.bounds(false);
+            this.svg.transform({x, y});
+            this.svg.size(width, height);
+            this.svgFirst.viewbox(bnds.x + x, bnds.y + y, width, height);
+            this.img.src = "data:image/svg+xml;utf8," + this.svg.svg();
+        }
+        return this.img;
+        //}
     }
 
-    bounds() {
-        return this.svgFirst.viewbox();
+    bounds(scaled) {
+        if (scaled) {
+            let scale = this.options.scale;
+            let bnds = this.svgFirst.viewbox();
+            bnds.width *= scale;
+            bnds.height *= scale;
+            return bnds;
+        } else
+            return this.svgFirst.viewbox();
     }
 
     getCollisionShapes() {
@@ -85,19 +88,19 @@ export default class SVGMapLoader extends EventEmitter {
         var scale = this.options.scale;
         var bounds = this.bounds();
 
-        svgElement.dx(-bounds.x);
-        svgElement.dy(-bounds.y);
+        //svgElement.dx(-bounds.x);
+        //svgElement.dy(-bounds.y);
 
         var width = svgElement.width() * scale;
         var height = svgElement.height() * scale;
         var rotation = svgElement.transform("rotation") / 180 * Math.PI;
 
-        let cx = svgElement.cx() * scale;
-        let cy = svgElement.cy() * scale;
+        let cx = (svgElement.cx() * scale) - bounds.x;
+        let cy = (svgElement.cy() * scale) - bounds.y;
 
         if (svgElement instanceof SVG.Rect) {
-            let x = svgElement.x() * scale;
-            let y = svgElement.y() * scale;
+            let x = (svgElement.x() * scale) - bounds.x;
+            let y = (svgElement.y() * scale) - bounds.y;
 
             return {cx, cy, x, y, width, height, rotation, type: "rect"};
         } else if (svgElement instanceof SVG.Circle) {
@@ -120,6 +123,10 @@ export default class SVGMapLoader extends EventEmitter {
                 let p = svgElement.pointAt(i);
                 p.x *= scale;
                 p.y *= scale;
+
+                p.x -= bounds.x;
+                p.y -= bounds.y;
+
                 vertices.push(p);
             }
 
@@ -133,6 +140,9 @@ export default class SVGMapLoader extends EventEmitter {
 
                 p.x *= scale;
                 p.y *= scale;
+
+                p.x -= bounds.x;
+                p.y -= bounds.y;
 
                 vertices.push(p);
             }

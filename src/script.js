@@ -4,6 +4,7 @@ import Renderer from "./renderer.js";
 import World from "./world.js";
 import SVGMapLoader from "./svg-map.js";
 import ObjectLoader from "./object-loader.js";
+import DynamicObjectLoader from "./dynamic-object-loader.js";
 
 var Example = Example || {};
 
@@ -71,7 +72,7 @@ Example.car = function() {
 
     var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: 1});
 
-    var objLoader = new ObjectLoader(mapLoader, {isStatic: true});
+    var objLoader = new DynamicObjectLoader(mapLoader, {isStatic: true});
     objLoader.load(physics, (object) => {
         Matter.World.add(physics, object.physicsObj);
         world.addObject(object);

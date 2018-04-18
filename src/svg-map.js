@@ -54,9 +54,15 @@ export default class SVGMapLoader extends EventEmitter {
         if (typeof x !== 'undefined') {
             let bnds = this.bounds(false);
             this.svg.transform({x, y});
-            this.svg.size(width, height);
-            this.svgFirst.viewbox(bnds.x + x, bnds.y + y, width, height);
-            this.img.src = "data:image/svg+xml;utf8," + this.svg.svg();
+            this.svg.size(width + x, height + y);
+            this.svgFirst.viewbox(bnds.x + x, bnds.y + y, width + x, height + y);
+
+            let img = new Image();
+            img.src = "data:image/svg+xml;utf8," + this.svg.svg();
+
+            this.svg.transform({x: 0, y: 0});
+            this.svgFirst.viewbox(bnds.x, bnds.y, bnds.width, bnds.height);
+            return img;
         }
         return this.img;
         //}
@@ -149,11 +155,11 @@ export default class SVGMapLoader extends EventEmitter {
 
             return {cx, cy, width, height, vertices, rotation, type: "polygon"};
         } else if (svgElement instanceof SVG.Line) {
-            let x = svgElement.x() * scale;
-            let y = svgElement.y() * scale;
+            let x = (svgElement.x() * scale) - bounds.x;
+            let y = (svgElement.y() * scale) - bounds.y;
 
-            let x2 = svgElement.attr('x2') * scale;
-            let y2 = svgElement.attr('y2') * scale;
+            let x2 = (svgElement.attr('x2') * scale) - bounds.x;
+            let y2 = (svgElement.attr('y2') * scale) - bounds.y;
 
             let vertices = [];
 

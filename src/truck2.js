@@ -41,6 +41,10 @@ export default class Truck extends CompositeGameObject {
         return this.body.physicsObj.position;
     }
 
+    velocity() {
+        return this.body.physicsObj.velocity;
+    }
+
     centre() {
         return Matter.Vertices.centre(this.body.physicsObj.vertices);
     }

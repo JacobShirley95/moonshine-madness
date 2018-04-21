@@ -1,4 +1,4 @@
-import Truck from "./truck2.js";
+import Truck from "./truck.js";
 import GameObject from "./game-object.js";
 import Renderer from "./renderer.js";
 import World from "./world.js";
@@ -42,19 +42,6 @@ Example.car = function() {
     const f = 0.2;
     const ff = 0.9;
 
-    /*var slope = Bodies.rectangle(0, 0, 10000, 60, { isStatic: true, frictionStatic: f, friction: ff, density: 1, angle: 0.2 * Math.PI });
-    var ramp = Bodies.rectangle(1400, 900, 200, 30, {isStatic: true, density: 1, angle: 0});
-    // add bodies
-    Matter.World.add(physics, [
-        // walls
-        //Bodies.rectangle(400, 0, 1200, 50, { isStatic: true, frictionStatic: f, friction: ff, density: 1 }),
-        //Bodies.rectangle(400, 600, 1200, 50, { isStatic: true, frictionStatic: f, friction: ff, density: 1 }),
-        //Bodies.rectangle(1000, 300, 50, 600, { isStatic: true, frictionStatic: f, friction: ff, density: 1 }),
-        //Bodies.rectangle(0, 300, 50, 600, { isStatic: true, frictionStatic: f, friction: ff, density: 1 }),
-        slope,
-        ramp
-    ]);*/
-
     const BLOCKS = 5;
     const WORLD_SCALE = 0.6;
 
@@ -68,7 +55,6 @@ Example.car = function() {
     truck.addWheel(-290, 140, 82.5, 0.2, 0.1, 0.8);
     truck.addWheel(225, 140, 82.5, 0.2, 0.1, 0.8);
     truck.flipX();
-    //
     truck.scale(WORLD_SCALE);
 
     var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: WORLD_SCALE});
@@ -80,19 +66,8 @@ Example.car = function() {
 
     camera.follow(truck);
 
+    world.debug(truck);
     world.debug(objLoader);
-
-    /*var l = new SVGMapLoader("assets/maps/test-wheel.svg", {scale: 5});
-
-    for (let i = 0; i < 5; i++) {
-        let wheel = new ObjectLoader(l, {friction: 0.5, mass: 1000, isStatic: false});
-
-        wheel.load(physics, (object) => {
-            wheel.translate({x: 1000, y: 1000});
-            world.addObject(object);
-            world.debug(object);
-        });
-    }*/
 
     var left = false;
     var right = false;

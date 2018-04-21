@@ -40,14 +40,8 @@ export default class CompositeGameObject extends GameObjectContainer {
         this.scale();
     }
 
-    createDebugObject() {
-        var bounds = Matter.Composite.bounds(this.composite);
-        var shape = new createjs.Shape();
-
-        var centre = this.position();
-
-        shape.graphics.beginStroke("red").drawRect(bounds.min.x - centre.x, bounds.min.y - centre.y, bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y).endStroke();
-
-        return new CompositeGameObject(this.composite);
+    translate(vec) {
+        Matter.Composite.translate(this.composite, vec);
     }
+
 }

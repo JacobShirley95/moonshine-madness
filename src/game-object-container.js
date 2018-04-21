@@ -38,7 +38,12 @@ export default class GameObjectContainer {
     }
 
     createDebugObject() {
-        return createDebug(this.physicsObj);
+        let dbgs = [];
+        for (let gO of this.gameObjects) {
+            dbgs.push(gO.createDebugObject());
+        }
+
+        return new GameObjectContainer(...dbgs);
     }
 
     scale(x, y, onlyRenderObj) {

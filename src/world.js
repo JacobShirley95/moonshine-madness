@@ -1,6 +1,5 @@
 import GameObject from "./game-object.js";
 import ObjectLoader from "./object-loader.js";
-import Truck from "./truck2.js";
 import CompoundGameObject from "./composite-game-object.js";
 import GameObjectContainer from "./game-object-container.js";
 
@@ -30,7 +29,7 @@ export default class World {
     addObject(gameObject, depth = 0) {
         let add = (obj) => {
             if (obj.renderObj != null) {
-                this.renderer.addObject(obj.renderObj);
+                this.renderer.addObject(obj.renderObj, obj.layer());
             }
 
             if (obj instanceof GameObjectContainer)

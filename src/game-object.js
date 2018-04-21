@@ -1,3 +1,5 @@
+import Layer from "./layer.js";
+
 function addAngles(body) {
     if (body.parent != null && body.parent != body) {
         return body.angle + addAngles(body.parent);
@@ -6,70 +8,15 @@ function addAngles(body) {
     return body.angle;
 }
 
-function createDebug(b) {
-    function drawBody(body) {
-        var s = new createjs.Shape();
-        var g = s.graphics;
-
-        g.beginStroke(body.parts.length == 1 ? "green" : "blue");
-        g.setStrokeStyle(4);
-
-        var verts = body.vertices;
-        var x = 0;
-        var y = 0;
-
-        s.x += body.position.x;
-        s.y += body.position.y;
-
-        for (var i = 0; i < verts.length; i++) {
-            g.moveTo(verts[i].x - s.x, verts[i].y - s.y);
-            g.lineTo(verts[(i + 1) % verts.length].x - s.x, verts[(i + 1) % verts.length].y - s.y);
-        }
-
-        g.endStroke();
-
-        var r = 20;
-        g.beginFill("red").drawEllipse(-r / 2, -r / 2, r, r).endFill();
-
-        s._static = body.isStatic;
-
-        return s;
-    }
-
-    var gameObject = new GameObject();
-    gameObject.physicsObj = b;
-
-    if (b.parts.length > 1) {
-        var container = new createjs.Container();
-
-        for (let i = 1; i < b.parts.length; i++) {
-            let s = drawBody(b.parts[i]);
-
-            container.addChild(s);
-        }
-
-        let centre = Matter.Vertices.centre(b.vertices);
-
-        console.log("pos1");
-        console.log(b.position);
-
-        container.regX += b.position.x;
-        container.regY += b.position.y;
-
-        gameObject.renderObj = container;
-    } else {
-        let s = drawBody(b);
-        gameObject.renderObj = s;
-    }
-
-    return gameObject;
-}
-
 export default class GameObject {
-    constructor(physicsObj, renderObj, ...gameObjects) {
+    constructor(physicsObj, renderObj, layerNum = 0) {
         this.physicsObj = physicsObj;
         this.renderObj = renderObj;
-        //this.gameObjects = gameObjects || [];
+        this.layerNum = layerNum;
+    }
+
+    layer() {
+        return this.layerNum;
     }
 
     flipX(onlyRenderObj) {
@@ -121,7 +68,7 @@ export default class GameObject {
     }
 
     createDebugObject() {
-        return createDebug(this.physicsObj);
+        return new DebugObject(this.physicsObj);
     }
 
     scale(x = 1, y, onlyRenderObj) {
@@ -130,7 +77,7 @@ export default class GameObject {
 
         this.renderObj.scaleX *= x;
         this.renderObj.scaleY *= y;
-        
+
         if (!onlyRenderObj)
             Matter.Body.scale(this.physicsObj, x, y);
     }
@@ -155,8 +102,57 @@ export default class GameObject {
         if (!this.physicsObj.isStatic) {
             this.renderObj.rotation = Math.degrees(addAngles(this.physicsObj));
         }
+    }
+}
 
-        //for (let sub of this.gameObjects)
-        //    sub.update();
+class DebugObject extends GameObject {
+    constructor(body) {
+        super(body, null, Layer.DEBUG);
+
+        if (body.parts.length > 1) {
+            this.renderObj = new createjs.Container();
+
+            for (let i = 1; i < body.parts.length; i++) {
+                let s = DebugObject.drawBody(body.parts[i]);
+
+                this.renderObj.addChild(s);
+            }
+
+            let centre = Matter.Vertices.centre(body.vertices);
+
+            this.renderObj.regX += body.position.x;
+            this.renderObj.regY += body.position.y;
+        } else {
+            this.renderObj = DebugObject.drawBody(body);
+        }
+    }
+
+    static drawBody(body) {
+        let s = new createjs.Shape();
+        let g = s.graphics;
+
+        g.beginStroke(body.parts.length == 1 ? "green" : "blue");
+        g.setStrokeStyle(4);
+
+        let verts = body.vertices;
+        let x = 0;
+        let y = 0;
+
+        s.x += body.position.x;
+        s.y += body.position.y;
+
+        for (let i = 0; i < verts.length; i++) {
+            g.moveTo(verts[i].x - s.x, verts[i].y - s.y);
+            g.lineTo(verts[(i + 1) % verts.length].x - s.x, verts[(i + 1) % verts.length].y - s.y);
+        }
+
+        g.endStroke();
+
+        let r = 20;
+        g.beginFill("red").drawEllipse(-r / 2, -r / 2, r, r).endFill();
+
+        s._static = body.isStatic;
+
+        return s;
     }
 }

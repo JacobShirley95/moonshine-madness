@@ -1,4 +1,5 @@
 import GameObject from "./game-object.js";
+import DeferredPromise from "./deferred-promise.js";
 
 export default class ObjectLoader extends GameObject {
     constructor(loader, options) {
@@ -7,18 +8,35 @@ export default class ObjectLoader extends GameObject {
         this.loader = loader;
         this.options = options;
         this.collisionShapes = [];
+
+        this.promise = new DeferredPromise((resolve, reject) => {
+            this.loader.load( (loader) => {
+                this.collisionShapes = loader.getCollisionShapes();
+
+                this.create(this.collisionShapes);
+                this.setTexture(loader.getTexture());
+
+                this.promise.resolve(this);
+            });
+        });
     }
 
-    load(physics, callback) {
-        var s = null;
-        this.loader.load( (loader) => {
-            this.collisionShapes = loader.getCollisionShapes();
+    load() {
+        return this.promise.start();
+    }
 
-            this.create(this.collisionShapes);
-            this.setTexture(loader.getTexture());
-
-            callback(this);
+    applyForce(force) {
+        return this.promise.then(() => {
+            return super.applyForce(force);
         });
+    }
+
+    position() {
+        return this.physicsObj ? super.position() : (this.options.position || {x: 0, y: 0});
+    }
+
+    velocity() {
+        return this.physicsObj ? super.velocity() : {x: 0, y: 0};
     }
 
     create(collisionShapes) {
@@ -48,7 +66,7 @@ export default class ObjectLoader extends GameObject {
                 //Matter.Body.setMass(b, this.options.mass);
                 bodies.push(b);
 
-                this.gameObjects.push(new GameObject(b));
+                //this.gameObjects.push(new GameObject(b));
             }
         }
 
@@ -71,10 +89,6 @@ export default class ObjectLoader extends GameObject {
 
         bitmap.regX += centre.x;
         bitmap.regY += centre.y;
-
-        tex.onload = () => {
-            bitmap.cache(0, 0, tex.width, tex.height);
-        }
 
         this.renderObj = bitmap;
     }

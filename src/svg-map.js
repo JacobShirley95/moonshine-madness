@@ -11,13 +11,12 @@ function ellipseVertices(x, y, rx, ry, step) {
     return vertices;
 }
 
-export default class SVGMapLoader extends EventEmitter {
+export default class SVGMapLoader {
     constructor(svgFile, options, callback) {
-        super();
-
         this.svgFile = svgFile;
         this.svgElement = document.createElement("svg");
         this.options = options || { scale: 1 };
+
 
         //document.body.appendChild(this.svgElement);
 
@@ -26,45 +25,99 @@ export default class SVGMapLoader extends EventEmitter {
     }
 
     load(callback) {
-        if (this.svg && this.texture) {
-            callback(this);
-            return;
+        if (this.promise)
+            return this.promise;
+
+        this.promise = new Promise((resolve, reject) => {
+            $.get(this.svgFile, (result) => {
+                this.svg = SVG(this.svgElement).svg(result);
+                this.svgFirst = this.svg.select("svg").first();
+
+                var bounds = this.bounds(true);
+                var w = bounds.width;
+                var h = bounds.height;
+
+                this.svg.transform({x: bounds.x, y: bounds.y});
+                this.svg.size(w, h);
+                this.svg.attr('preserveAspectRatio', 'xMinYMin slice');
+
+                resolve(this);
+            }, "text");
+        });
+
+        this.promise.then(callback);
+    }
+
+    scale(sc = 1) {
+        if (typeof this.options.scale !== 'undefined') {
+            this.options.scale = sc;
         }
-
-        this.once("load", callback);
-
-        $.get(this.svgFile, (result) => {
-            this.svg = SVG(this.svgElement).svg(result);
-            this.svgFirst = this.svg.select("svg").first();
-
-            var bounds = this.bounds(true);
-            var w = bounds.width;
-            var h = bounds.height;
-
-            this.svg.transform({x: bounds.x, y: bounds.y});
-            this.svg.size(w, h);
-            this.img = new Image();
-            this.img.src = "data:image/svg+xml;utf8," + this.svg.svg();
-
-            this.emit("load", this);
-        }, "text");
+        return this.options.scale;
     }
 
     getTexture(x, y, width, height) {
+        //await this.promise;
+
+
         if (typeof x !== 'undefined') {
+            let scale = this.options.scale;
             let bnds = this.bounds(false);
-            this.svg.transform({x, y});
-            this.svg.size(width + x, height + y);
-            this.svgFirst.viewbox(bnds.x + x, bnds.y + y, width + x, height + y);
+
+            /*x *= 1/scale;
+            y *= 1/scale;
+            width *= 1/scale;
+            height *= 1/scale;
+
+            this.svg.transform({x: x * scale, y: y * scale});
+            this.svg.size((width + x) * scale, (height + y) * scale);
+            this.svgFirst.viewbox(bnds.x + x, bnds.y + y, width + x, height + y);*/
+
+            //scale = 0.5;
+
+            /*x *= scale;
+            y *= scale;
+            width *= scale;
+            height *= scale;
+*/
+
+            console.log(1 / scale);
+            this.svg.transform({x: 0, y: 0});
+            this.svg.size(width, height);
+
+            x *= 1/scale;
+            y *= 1/scale;
+            width *= 1/scale;
+            height *= 1/scale;
+
+            this.svgFirst.viewbox(bnds.x + x, bnds.y + y, width, height);
 
             let img = new Image();
             img.src = "data:image/svg+xml;utf8," + this.svg.svg();
 
+            var can = document.createElement("canvas");
+            can.setAttribute("width", Math.round((width + x) * scale));
+            can.setAttribute("height", Math.round((height + y) * scale));
+
+            var ctx = can.getContext("2d");
+
+            img.onload = () => {
+                //ctx.drawImage(img, 0, 0, (width + x) * scale, (height + y) * scale);
+                console.log(width+", "+img.width);
+                console.log(height+","+img.height);
+            }
+
+            this.svg.scale(1, 1);
             this.svg.transform({x: 0, y: 0});
+            this.svg.size(bnds.width, bnds.height);
             this.svgFirst.viewbox(bnds.x, bnds.y, bnds.width, bnds.height);
             return img;
+        } else {
+            if (!this.img) {
+                this.img = new Image();
+                this.img.src = "data:image/svg+xml;utf8," + this.svg.svg();
+            }
+            return this.img;
         }
-        return this.img;
         //}
     }
 
@@ -101,12 +154,12 @@ export default class SVGMapLoader extends EventEmitter {
         var height = svgElement.height() * scale;
         var rotation = svgElement.transform("rotation") / 180 * Math.PI;
 
-        let cx = (svgElement.cx() * scale) - bounds.x;
-        let cy = (svgElement.cy() * scale) - bounds.y;
+        let cx = (svgElement.cx() - bounds.x) * scale;
+        let cy = (svgElement.cy() - bounds.y) * scale;
 
         if (svgElement instanceof SVG.Rect) {
-            let x = (svgElement.x() * scale) - bounds.x;
-            let y = (svgElement.y() * scale) - bounds.y;
+            let x = (svgElement.x() - bounds.x) * scale;
+            let y = (svgElement.y() - bounds.y) * scale;
 
             return {cx, cy, x, y, width, height, rotation, type: "rect"};
         } else if (svgElement instanceof SVG.Circle) {
@@ -127,11 +180,12 @@ export default class SVGMapLoader extends EventEmitter {
 
             for (let i = 0; i < length; i += steps) {
                 let p = svgElement.pointAt(i);
-                p.x *= scale;
-                p.y *= scale;
 
                 p.x -= bounds.x;
                 p.y -= bounds.y;
+
+                p.x *= scale;
+                p.y *= scale;
 
                 vertices.push(p);
             }
@@ -144,22 +198,22 @@ export default class SVGMapLoader extends EventEmitter {
             for (let i = 0; i < points.length; i++) {
                 let p = {x: points[i][0], y: points[i][1]};
 
-                p.x *= scale;
-                p.y *= scale;
-
                 p.x -= bounds.x;
                 p.y -= bounds.y;
+
+                p.x *= scale;
+                p.y *= scale;
 
                 vertices.push(p);
             }
 
             return {cx, cy, width, height, vertices, rotation, type: "polygon"};
         } else if (svgElement instanceof SVG.Line) {
-            let x = (svgElement.x() * scale) - bounds.x;
-            let y = (svgElement.y() * scale) - bounds.y;
+            let x = (svgElement.x() - bounds.x) * scale;
+            let y = (svgElement.y() - bounds.y) * scale;
 
-            let x2 = (svgElement.attr('x2') * scale) - bounds.x;
-            let y2 = (svgElement.attr('y2') * scale) - bounds.y;
+            let x2 = (svgElement.attr('x2') - bounds.x) * scale;
+            let y2 = (svgElement.attr('y2') - bounds.y) * scale;
 
             let vertices = [];
 

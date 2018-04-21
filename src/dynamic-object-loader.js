@@ -3,47 +3,131 @@ import ObjectLoader from "./object-loader.js";
 export default class DynamicObjectLoader extends ObjectLoader {
     constructor(loader, options) {
         super(loader, options);
-        this.loadedParts = [];
+        this.loadedParts = new Map();
 
         this.offsetX = 1500;
         this.offsetY = 1500;
+
+        this.loadedX = 0;
+        this.loadedY = 0;
+
+        this.loadedWidth = 0;
+        this.loadedHeight = 0;
+    }
+
+    centre() {
+        let bounds = this.dimensions();
+        return {x: bounds.x / 2, y: bounds.y / 2};
+    }
+
+    position() {
+        let bounds = this.bounds();
+        return {x: (bounds.min.x + bounds.max.x) / 2, y: (bounds.min.y + bounds.max.y) / 2};
+    }
+
+    getLoadedBounds() {
+        let minX = -1;
+        let minY = -1;
+        let maxX = -1;
+        let maxY = -1;
+        for (let part of this.loadedParts) {
+            if (minX == -1) {
+                minX = part.x;
+                minY = part.y;
+                maxX = part.x;
+                maxY = part.y;
+            } else {
+                minX = Math.min(minX, part.x);
+                minY = Math.min(minY, part.y);
+                maxX = Math.max(maxX, part.x + part.width);
+                maxY = Math.max(maxY, part.y + part.y);
+            }
+        }
+
+        return {min: {x: minX, y: minY}, max: {x: maxX, y: maxY}};
     }
 
     setTexture(tex) {
         var container = new createjs.Container();
-        var centre = this.position();
+        var centre = this.centre();
 
-        container.regX += centre.x;
-        container.regY += centre.y;
+        container.regX += centre.x + this.bounds().min.x;
+        container.regY += centre.y + this.bounds().min.y;
+
+        var dB = new createjs.Shape();
+        let g = dB.graphics;
+
+        let dimensions = this.dimensions();
+        g.beginStroke("red").setStrokeStyle(8).drawRect(0, 0, dimensions.x, dimensions.y).endStroke();
+        //container.addChild(dB);
 
         this.renderObj = container;
     }
 
+    texturePartID(x, y, width, height) {
+        return (x << 16) | (y & 0xFFFF);
+    }
+
     loadTexturePart(x, y, width, height) {
+        let id = this.texturePartID(x, y);
         if (x < 0 || y < 0)
             return;
 
-        this.loadedParts.push({x, y, width, height});
+        let found = this.loadedParts.get(id);
+        if (found) {
+            if (found.width >= width && found.height >= height)
+                return;
+        }
+
+        //width *= this.loader.scale();
+        //height *= this.loader.scale();
 
         var dB = new createjs.Shape();
         let g = dB.graphics;
+
+        var centre = this.physicsObj.position;
+        let bounds = this.physicsObj.bounds;
         g.beginStroke("red").setStrokeStyle(8).drawRect(x, y, width, height).endStroke();
-        //dB.cache(x- 2, y-5, width, height);
 
         this.renderObj.addChild(dB);
 
         let tex = this.loader.getTexture(x, y, width, height);
+        var bitmap = new createjs.Bitmap(tex);
+
+        bitmap.x = x;
+        bitmap.y = y;
+        this.renderObj.addChild(bitmap);
+
+        let part = {x, y, width, height, obj: bitmap, debug: dB};
+        this.loadedParts.set(id, part);
+
+        this.loadedX += width;
+        this.loadedY += height;
+
         tex.onload = () => {
-            var bitmap = new createjs.Bitmap(tex);
-            //bitmap.cache(x, y, 1000, 1000);
-            this.renderObj.addChild(bitmap);
+            let b = this.getLoadedBounds();
+            //console.log(b);
+            this.renderObj.cache(0, 0, this.loadedX, this.loadedY);
         }
+    }
 
-        //bitmap.x = x;
-        //bitmap.x = y;
+    unloadTexturePartsByDist(dist) {
+        let mods = this.directionMods();
+        let p = this.followPos(this.offsetX * mods.x, this.offsetY * mods.y);
+        let d2 = dist*dist;
 
+        for (let part of this.loadedParts.values()) {
+            let c = this.getCentre(part);
 
-
+            let dx = c.x - p.x;
+            let dy = c.y - p.y;
+            let d = (dx*dx) + (dy*dy);
+            if (d > d2) {
+                this.loadedParts.delete(this.texturePartID(part.x, part.y));
+                this.renderObj.removeChild(part.obj);
+                this.renderObj.removeChild(part.debug);
+            }
+        }
     }
 
     follow(object) {
@@ -65,7 +149,7 @@ export default class DynamicObjectLoader extends ObjectLoader {
     }
 
     needsToLoad(pos) {
-        for (let part of this.loadedParts) {
+        for (let part of this.loadedParts.values()) {
             if (pos.x >= part.x && pos.y >= part.y && pos.x <= part.x + part.width && pos.y <= part.y + part.height) {
                 return false;
             }
@@ -82,7 +166,7 @@ export default class DynamicObjectLoader extends ObjectLoader {
         let minDist = -1;
         let closest = null;
 
-        for (let part of this.loadedParts) {
+        for (let part of this.loadedParts.values()) {
             let c = this.getCentre(part);
             let dx = c.x - pos.x;
             let dy = c.y - pos.y;
@@ -105,6 +189,9 @@ export default class DynamicObjectLoader extends ObjectLoader {
     update() {
         super.update();
 
+        if (!this.renderObj)
+            return;
+
         //var pos = this.following ? this.following.position() : {x: 0, y: 0};
 
         const LD_WIDTH = 3000;
@@ -118,10 +205,13 @@ export default class DynamicObjectLoader extends ObjectLoader {
             if (!closest) {
                 console.log("no closest");
                 this.loadTexturePart(0, 0, LD_WIDTH, LD_HEIGHT);
+                //this.loadTexturePart(0, LD_WIDTH, LD_WIDTH, LD_HEIGHT);
+                //this.loadTexturePart(LD_WIDTH, LD_HEIGHT * 1, LD_WIDTH, LD_HEIGHT);
+                //this.loadTexturePart(LD_WIDTH * 2, LD_HEIGHT * 4, LD_WIDTH, LD_HEIGHT);
                 //this.loadTexturePart(LD_WIDTH, 0, LD_WIDTH, LD_HEIGHT);
                 //this.loadTexturePart(LD_WIDTH, LD_HEIGHT, LD_WIDTH, LD_HEIGHT);
             } else {
-                console.log("loading");
+                //console.log("loading");
                 let offX = mods.x * LD_WIDTH;
                 let offY = mods.y * LD_HEIGHT;
 
@@ -132,10 +222,12 @@ export default class DynamicObjectLoader extends ObjectLoader {
                     this.loadTexturePart(closest.x + offX, closest.y + offY, LD_WIDTH, LD_HEIGHT);
 
                 if (offY > 0)
-                    this.loadTexturePart(closest.x, closest.y + offY, LD_WIDTH, LD_HEIGHT);
+                    this.loadTexturePart(closest.x, closest.y + offY, LD_WIDTH, LD_HEIGHT);//*/
             }
 
             this.loaded = true;
         }
+
+        this.unloadTexturePartsByDist(5000);
     }
 }

@@ -15,8 +15,12 @@ function createDebug(b) {
         g.setStrokeStyle(4);
 
         var verts = body.vertices;
-        s.x = body.position.x;
-        s.y = body.position.y;
+        var x = 0;
+        var y = 0;
+
+        s.x += body.position.x;
+        s.y += body.position.y;
+
 
         for (var i = 0; i < verts.length; i++) {
             g.moveTo(verts[i].x - s.x, verts[i].y - s.y);
@@ -26,7 +30,7 @@ function createDebug(b) {
         g.endStroke();
 
         var r = 20;
-        g.beginFill("green").drawEllipse(-r / 2, -r / 2, r, r).endFill();
+        g.beginFill("red").drawEllipse(-r / 2, -r / 2, r, r).endFill();
 
         s._static = body.isStatic;
 
@@ -47,6 +51,9 @@ function createDebug(b) {
 
         let centre = Matter.Vertices.centre(b.vertices);
 
+        console.log("pos1");
+        console.log(b.position);
+
         container.regX += b.position.x;
         container.regY += b.position.y;
 
@@ -63,7 +70,7 @@ export default class GameObject {
     constructor(physicsObj, renderObj, ...gameObjects) {
         this.physicsObj = physicsObj;
         this.renderObj = renderObj;
-        this.gameObjects = gameObjects || [];
+        //this.gameObjects = gameObjects || [];
     }
 
     flipX(onlyRenderObj) {
@@ -72,11 +79,6 @@ export default class GameObject {
 
         if (!onlyRenderObj) {
             Matter.Body.scale(this.physicsObj, -1, 1);
-        }
-
-
-        for (let gO of this.gameObjects) {
-            gO.flipX(true);
         }
 
         if (this.debugShape)
@@ -91,13 +93,25 @@ export default class GameObject {
             Matter.Body.scale(this.physicsObj, 1, -1);
         }
 
-        for (let gO of this.gameObjects) {
-            gO.flipX(onlyRenderObj);
-        }
+        if (this.debugShape)
+            this.debugShape.flipY(true);
+    }
+
+    bounds() {
+        return this.physicsObj.bounds;
     }
 
     position() {
         return this.physicsObj.position;
+    }
+
+    velocity() {
+        return this.physicsObj.velocity;
+    }
+
+    dimensions() {
+        let bounds = this.bounds();
+        return {x: bounds.max.x - bounds.min.x, y: bounds.max.y - bounds.min.y};
     }
 
     applyForce(force, from) {
@@ -147,5 +161,8 @@ export default class GameObject {
         if (!this.physicsObj.isStatic) {
             this.renderObj.rotation = Math.degrees(addAngles(this.physicsObj));
         }
+
+        //for (let sub of this.gameObjects)
+        //    sub.update();
     }
 }

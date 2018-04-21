@@ -5,6 +5,7 @@ import World from "./world.js";
 import SVGMapLoader from "./svg-map.js";
 import ObjectLoader from "./object-loader.js";
 import DynamicObjectLoader from "./dynamic-object-loader.js";
+import SVGTexture from "./svg-texture.js";
 
 var Example = Example || {};
 
@@ -56,31 +57,26 @@ Example.car = function() {
     const BLOCKS = 5;
 
     var renderer = new Renderer(200, 200, 200, 300);
-    renderer.scale(0.05);
+    renderer.scale(0.08);
 
     var world = new World(physics, renderer);
+    var truck = new Truck(500, 50, 305, 1.0);
+    truck.addWheel(-290, 140, 82.5, 0.2, 0.1, 0.8);
+    truck.addWheel(225, 140, 82.5, 0.2, 0.1, 0.8);
+    truck.flipX();
 
-
-    var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: 1});
-
+    var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: 0.9});
     var objLoader = new DynamicObjectLoader(mapLoader, {isStatic: true});
-    objLoader.load(physics, (object) => {
-        var truck = new Truck(500, 50, 305, 1.0);
+    objLoader.follow(truck);
 
-        truck.addWheel(-290, 140, 82.5, 0.2, 0.1, 0.8);
-        truck.addWheel(225, 140, 82.5, 0.2, 0.1, 0.8);
-        truck.load(physics, () => {
-            truck.flipX();
-            world.addObject(truck);
-            world.debug(truck);
-            renderer.follow(truck.body.renderObj);
-            object.follow(truck);
-        });
+    world.addObject(objLoader);
+    world.addObject(truck);
 
-        Matter.World.add(physics, object.physicsObj);
-        world.addObject(object);
-        world.debug(object);
+    truck.load().then(() => {
+        renderer.follow(truck.body.renderObj);
     });
+
+    world.debug(objLoader);
 
     /*var l = new SVGMapLoader("assets/maps/test-wheel.svg", {scale: 5});
 

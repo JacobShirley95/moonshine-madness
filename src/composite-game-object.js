@@ -14,30 +14,30 @@ export default class CompositeGameObject extends GameObjectContainer {
 
     velocity() {}
 
-    flipX(onlyRenderObj) {
-        super.flipX(true);
+    scale(x = 1, y) {
+        if (typeof y === 'undefined')
+            y = x;
 
-        if (!onlyRenderObj) {
-            Matter.Composite.scale(this.composite, -1, 1, this.centre());
+        super.scale(x, y, true);
 
-            for (let c of this.composite.constraints) {
-                c.pointA.x *= -1;
-                c.pointB.x *= -1;
-            }
+        Matter.Composite.scale(this.composite, x, y, this.centre());
+        for (let c of this.composite.constraints) {
+            c.pointA.x *= x;
+            c.pointB.x *= x;
+
+            c.pointA.y *= y;
+            c.pointB.y *= y;
         }
     }
 
-    flipY(onlyRenderObj) {
-        super.flipX(true);
+    flipX() {
+        this.scale(-1, 1);
+        this.scale();
+    }
 
-        if (!onlyRenderObj) {
-            Matter.Composite.scale(this.composite, 1, -1, this.centre());
-
-            for (let c of this.composite.constraints) {
-                c.pointA.y *= -1;
-                c.pointB.y *= -1;
-            }
-        }
+    flipY() {
+        this.scale(1, -1);
+        this.scale();
     }
 
     createDebugObject() {

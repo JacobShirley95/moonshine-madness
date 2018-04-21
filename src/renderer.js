@@ -1,25 +1,15 @@
 export default class Renderer {
-    constructor(minX, maxX, minY, maxY) {
+    constructor(camera) {
         this.stage = new createjs.Stage("game");
-
-        this.scalee = 1;
-
-        this.renderX = 0;
-        this.renderY = 0;
-
-        this.minX = minX;
-        this.maxX = maxX;
-
-        this.minY = minY;
-        this.maxY = maxY;
 
         this.target = null;
 
         this.renderObjs = [];
+        this.camera = camera;
     }
 
     scale(sc) {
-        this.scalee = sc;
+        this.camera.scale(sc);
         this.stage.scaleX *= this.stage.scaleY = sc;
     }
 
@@ -27,50 +17,31 @@ export default class Renderer {
         obj.visible = flag;
     }
 
-    addObject(renderObj) {
+    addObject(renderObj, layer = 0) {
         this.renderObjs.push(renderObj);
 
         this.stage.addChild(renderObj);
+        this.stage.setChildIndex(renderObj, layer);
     }
 
     follow(object) {
-        this.target = object;
+        this.camera.follow(object);
+    }
+
+    setCamera(camera) {
+        this.camera = camera;
     }
 
     update() {
-        var minX = this.minX + 1;
-        var maxX = this.maxX - 1;
-
-        var minY = this.minY + 1;
-        var maxY = this.maxY - 1;
-
         for (let renderObj of this.renderObjs) {
-            renderObj.x -= this.renderX;
-            renderObj.y -= this.renderY;
+            renderObj.x -= this.camera.x;
+            renderObj.y -= this.camera.y;
 
             if (!renderObj._static) {
             }
         }
 
-        if (this.target != null) {
-            minX = Math.min(minX, this.target.x * this.stage.scaleX);
-            maxX = Math.max(maxX, this.target.x * this.stage.scaleX);
-
-            minY = Math.min(minY, this.target.y * this.stage.scaleY);
-            maxY = Math.max(maxY, this.target.y * this.stage.scaleY);
-        }
-
-        if (minX < this.minX) {
-            this.renderX -= this.minX - minX;
-        } else if (maxX > this.maxX) {
-            this.renderX += maxX - this.maxX;
-        }
-
-        if (minY < this.minY) {
-            this.renderY -= this.minY - minY;
-        } else if (maxY > this.maxY) {
-            this.renderY += maxY - this.maxY;
-        }
+        this.camera.update();
     }
 
     render() {

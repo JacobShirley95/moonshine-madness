@@ -63,31 +63,15 @@ export default class SVGMapLoader {
             let scale = this.options.scale;
             let bnds = this.bounds(false);
 
-            /*x *= 1/scale;
-            y *= 1/scale;
-            width *= 1/scale;
-            height *= 1/scale;
-
-            this.svg.transform({x: x * scale, y: y * scale});
-            this.svg.size((width + x) * scale, (height + y) * scale);
-            this.svgFirst.viewbox(bnds.x + x, bnds.y + y, width + x, height + y);*/
-
-            //scale = 0.5;
-
-            /*x *= scale;
-            y *= scale;
-            width *= scale;
-            height *= scale;
-*/
-
-            console.log(1 / scale);
             this.svg.transform({x: 0, y: 0});
             this.svg.size(width, height);
 
-            x *= 1/scale;
-            y *= 1/scale;
-            width *= 1/scale;
-            height *= 1/scale;
+            let invScale = 1/scale;
+
+            x *= invScale;
+            y *= invScale;
+            width *= invScale;
+            height *= invScale;
 
             this.svgFirst.viewbox(bnds.x + x, bnds.y + y, width, height);
 

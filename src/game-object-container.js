@@ -41,9 +41,9 @@ export default class GameObjectContainer {
         return createDebug(this.physicsObj);
     }
 
-    scale(sc) {
+    scale(x, y, onlyRenderObj) {
         for (let gO of this.gameObjects) {
-            gO.scale(sc);
+            gO.scale(x, y, onlyRenderObj);
         }
     }
 

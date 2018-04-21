@@ -6,6 +6,7 @@ import SVGMapLoader from "./svg-map.js";
 import ObjectLoader from "./object-loader.js";
 import DynamicObjectLoader from "./dynamic-object-loader.js";
 import SVGTexture from "./svg-texture.js";
+import Camera from "./camera.js";
 
 var Example = Example || {};
 
@@ -55,26 +56,29 @@ Example.car = function() {
     ]);*/
 
     const BLOCKS = 5;
+    const WORLD_SCALE = 0.6;
 
-    var renderer = new Renderer(200, 200, 200, 300);
-    renderer.scale(0.08);
+    var camera = new Camera(200, 200, 200, 300, 1, 1);
+
+    var renderer = new Renderer(camera);
+    renderer.scale(0.2);
 
     var world = new World(physics, renderer);
-    var truck = new Truck(500, 50, 305, 1.0);
+    var truck = new Truck(500, 50, 305);
     truck.addWheel(-290, 140, 82.5, 0.2, 0.1, 0.8);
     truck.addWheel(225, 140, 82.5, 0.2, 0.1, 0.8);
     truck.flipX();
+    //
+    truck.scale(WORLD_SCALE);
 
-    var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: 0.9});
+    var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: WORLD_SCALE});
     var objLoader = new DynamicObjectLoader(mapLoader, {isStatic: true});
     objLoader.follow(truck);
 
     world.addObject(objLoader);
     world.addObject(truck);
 
-    truck.load().then(() => {
-        renderer.follow(truck.body.renderObj);
-    });
+    camera.follow(truck);
 
     world.debug(objLoader);
 

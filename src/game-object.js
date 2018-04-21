@@ -21,7 +21,6 @@ function createDebug(b) {
         s.x += body.position.x;
         s.y += body.position.y;
 
-
         for (var i = 0; i < verts.length; i++) {
             g.moveTo(verts[i].x - s.x, verts[i].y - s.y);
             g.lineTo(verts[(i + 1) % verts.length].x - s.x, verts[(i + 1) % verts.length].y - s.y);
@@ -74,24 +73,14 @@ export default class GameObject {
     }
 
     flipX(onlyRenderObj) {
-        if (this.renderObj)
-            this.renderObj.scaleX *= -1;
-
-        if (!onlyRenderObj) {
-            Matter.Body.scale(this.physicsObj, -1, 1);
-        }
+        this.scale(-1, 1, onlyRenderObj);
 
         if (this.debugShape)
             this.debugShape.flipX(true);
     }
 
-    flipY() {
-        if (this.renderObj)
-            this.renderObj.scaleY *= -1;
-
-        if (!onlyRenderObj) {
-            Matter.Body.scale(this.physicsObj, 1, -1);
-        }
+    flipY(onlyRenderObj) {
+        this.scale(1, -1, onlyRenderObj);
 
         if (this.debugShape)
             this.debugShape.flipY(true);
@@ -135,10 +124,15 @@ export default class GameObject {
         return createDebug(this.physicsObj);
     }
 
-    scale(sc) {
-        this.renderObj.scaleX *= sc;
-        this.renderObj.scaleY *= sc;
-        Matter.Body.scale(this.physicsObj, sc, sc);
+    scale(x = 1, y, onlyRenderObj) {
+        if (typeof y === 'undefined')
+            y = x;
+
+        this.renderObj.scaleX *= x;
+        this.renderObj.scaleY *= y;
+        
+        if (!onlyRenderObj)
+            Matter.Body.scale(this.physicsObj, x, y);
     }
 
     translate(vec) {

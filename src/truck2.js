@@ -13,7 +13,7 @@ export default class Truck extends CompositeGameObject {
         this.x = x;
         this.y = y;
 
-        this.scale = scale;
+        //this.scale = scale;
         this.wheels = [];
 
         this.colGroup = Matter.Body.nextGroup(true);
@@ -37,9 +37,9 @@ export default class Truck extends CompositeGameObject {
         });
     }
 
-    flipX() {
+    scale(x, y) {
         return this.promise.then((obj) => {
-            super.flipX();
+            return super.scale(x, y);
         });
     }
 
@@ -111,13 +111,11 @@ export default class Truck extends CompositeGameObject {
     }
 
     load(physics) {
-        console.log("load");
         if (physics) {
-            //Matter.World.add(physics, this.composite);
-            console.log("2222");
+            this.promise.start();
         }
-
-        return this.promise.start();
+        
+        return this.promise;
         //world.renderer.addObject(this.com);
     }
 

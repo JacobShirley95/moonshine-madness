@@ -30,17 +30,18 @@ export default class DynamicObjectLoader extends ObjectLoader {
         let minY = -1;
         let maxX = -1;
         let maxY = -1;
-        for (let part of this.loadedParts) {
+        for (let part of this.loadedParts.values()) {
             if (minX == -1) {
                 minX = part.x;
                 minY = part.y;
-                maxX = part.x;
-                maxY = part.y;
+                maxX = part.x + part.width;
+                maxY = part.y + part.height;
             } else {
+                //console.log(minX);
                 minX = Math.min(minX, part.x);
                 minY = Math.min(minY, part.y);
                 maxX = Math.max(maxX, part.x + part.width);
-                maxY = Math.max(maxY, part.y + part.y);
+                maxY = Math.max(maxY, part.y + part.height);
             }
         }
 
@@ -105,10 +106,15 @@ export default class DynamicObjectLoader extends ObjectLoader {
         this.loadedY += height;
 
         tex.onload = () => {
-            let b = this.getLoadedBounds();
-            //console.log(b);
-            this.renderObj.cache(0, 0, this.loadedX, this.loadedY);
+            this.cache();
         }
+    }
+
+    cache() {
+        let b = this.getLoadedBounds();
+        let margin = 50;
+
+        this.renderObj.cache(b.min.x - margin, b.min.y - margin, b.max.x - b.min.x + margin, b.max.y - b.min.y + margin);
     }
 
     unloadTexturePartsByDist(dist) {

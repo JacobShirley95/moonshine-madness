@@ -28,66 +28,46 @@ export default class World {
     }
 
     addObject(gameObject, depth = 0) {
-        if (gameObject instanceof GameObjectContainer) {
-            if (gameObject.load) {
-                gameObject.load(this.physics).then((obj) => {
-                    for (let sub of gameObject.gameObjects) {
-                        this.addObject(sub, depth + 1);
-                    }
-
-                    if (gameObject instanceof GameObjectContainer) {
-
-                        Matter.World.add(this.physics, gameObject.composite);
-                    } else {
-                        Matter.World.add(this.physics, gameObject.physicsObj);
-                    }
-                });
+        let add = (obj) => {
+            if (obj.renderObj != null) {
+                this.renderer.addObject(obj.renderObj);
             }
-        } else {
-            if (gameObject.renderObj != null) {
-                this.renderer.addObject(gameObject.renderObj);
-            }
+
+            if (obj instanceof GameObjectContainer)
+                for (let gO of obj.gameObjects)
+                    this.addObject(gO, depth + 1);
 
             if (depth == 0) {
-                if (gameObject.load) {
-                    gameObject.load(this.physics).then((obj) => {
-                        if (gameObject.renderObj != null) {
-                            this.renderer.addObject(gameObject.renderObj);
-                        }
-                        if (gameObject instanceof GameObjectContainer) {
-
-                            Matter.World.add(this.physics, gameObject.composite);
-                        } else {
-                            Matter.World.add(this.physics, gameObject.physicsObj);
-                        }
-                    });
+                if (obj instanceof GameObjectContainer) {
+                    Matter.World.add(this.physics, obj.composite);
                 } else {
-
+                    Matter.World.add(this.physics, obj.physicsObj);
                 }
-                console.log(gameObject);
-
             }
         }
 
+        if (gameObject.load) {
+            gameObject.load(this.physics).then((obj) => {
+                add(gameObject);
+            });
+        } else {
+            add(gameObject);
+        }
+
         //if (depth == 0)
-            this.gameObjects.push(gameObject);
+        this.gameObjects.push(gameObject);
+    }
+
+    follow(gameObject) {
     }
 
     debug(gO) {
         if (gO.load) {
             gO.load().then((obj) => {
                 this.addObject(gO.createDebugObject(), 1);
-
-                //for (let sub of gO.gameObjects) {
-                    //this.addObject(sub.createDebugObject(), 1);
-                //}
             });
         } else {
             this.addObject(gO.createDebugObject(), 1);
-
-            //for (let sub of gO.gameObjects) {
-                //this.addObject(sub.createDebugObject(), 1);
-            //}
         }
     }
 

@@ -1,5 +1,5 @@
 export default class Camera {
-    constructor(minX, minY, maxX, maxY, scaleX, scaleY) {
+    constructor(minX, minY, maxX, maxY, zoomX, zoomY) {
         this.x = 0;
         this.y = 0;
 
@@ -9,20 +9,20 @@ export default class Camera {
         this.maxX = maxX;
         this.maxY = maxY;
 
-        this.scaleX = scaleX;
-        this.scaleY = scaleY;
+        this.zoomX = zoomX;
+        this.zoomY = zoomY;
+
+        this.lockspeed = 1.0;
 
         this.target = null;
     }
 
-    scale(x, y) {
+    zoom(x, y) {
         if (typeof y === 'undefined')
             y = x;
 
-        console.log(x);
-
-        this.scaleX = x;
-        this.scaleY = y;
+        this.zoomX = x;
+        this.zoomY = y;
     }
 
     follow(object) {
@@ -46,23 +46,27 @@ export default class Camera {
             let pos = this.target.position();
             let p2 = {x: pos.x - this.x, y: pos.y - this.y};
 
-            minX = Math.min(minX, p2.x * this.scaleX);
-            maxX = Math.max(maxX, p2.x * this.scaleX);
+            minX = Math.min(minX, p2.x * this.zoomX);
+            maxX = Math.max(maxX, p2.x * this.zoomX);
 
-            minY = Math.min(minY, p2.y * this.scaleY);
-            maxY = Math.max(maxY, p2.y * this.scaleY);
+            minY = Math.min(minY, p2.y * this.zoomY);
+            maxY = Math.max(maxY, p2.y * this.zoomY);
         }
 
         if (minX < this.minX) {
             this.x -= this.minX - minX;
+            this.x *= this.lockspeed;
         } else if (maxX > this.maxX) {
             this.x += maxX - this.maxX;
+            this.x *= this.lockspeed;
         }
 
         if (minY < this.minY) {
             this.y -= this.minY - minY;
+            this.y *= this.lockspeed;
         } else if (maxY > this.maxY) {
             this.y += maxY - this.maxY;
+            this.y *= this.lockspeed;
         }
     }
 }

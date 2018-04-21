@@ -1,6 +1,6 @@
 import GameObject from "./game-object.js";
 import ObjectLoader from "./object-loader.js";
-import CompoundGameObject from "./composite-game-object.js";
+import CompositeGameObject from "./composite-game-object.js";
 import GameObjectContainer from "./game-object-container.js";
 
 export default class World {
@@ -37,11 +37,7 @@ export default class World {
                     this.addObject(gO, depth + 1);
 
             if (depth == 0) {
-                if (obj instanceof GameObjectContainer) {
-                    Matter.World.add(this.physics, obj.composite);
-                } else {
-                    Matter.World.add(this.physics, obj.physicsObj);
-                }
+                Matter.World.add(this.physics, obj instanceof CompositeGameObject ? obj.composite : obj.physicsObj);
             }
         }
 

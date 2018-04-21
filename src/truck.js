@@ -64,11 +64,7 @@ export default class Truck extends CompositeGameObject {
     }
 
     centre() {
-        return Matter.Vertices.centre(this.body.physicsObj.vertices);
-    }
-
-    chassisCentre() {
-        return Matter.Vertices.centre(this.chassis.physicsObj.vertices);
+        return this.body.centre();
     }
 
     addWheel(offsetX, offsetY, radius, suspensionDamping, suspensionStiffness, friction) {
@@ -113,9 +109,5 @@ export default class Truck extends CompositeGameObject {
         }
 
         return this.promise;
-        //world.renderer.addObject(this.com);
-    }
-
-    update() {
     }
 }

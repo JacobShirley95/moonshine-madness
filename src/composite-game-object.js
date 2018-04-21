@@ -6,13 +6,11 @@ export default class CompositeGameObject extends GameObjectContainer {
         this.composite = composite;
     }
 
-    position() {
-        var bounds = Matter.Composite.bounds(this.composite);
+    /*position() {
+        let bounds = Matter.Composite.bounds(this.composite);
 
         return {x: (bounds.min.x + bounds.max.x) / 2, y: (bounds.min.y + bounds.max.y) / 2};
-    }
-
-    velocity() {}
+    }*/
 
     scale(x = 1, y) {
         if (typeof y === 'undefined')
@@ -43,5 +41,4 @@ export default class CompositeGameObject extends GameObjectContainer {
     translate(vec) {
         Matter.Composite.translate(this.composite, vec);
     }
-
 }

@@ -17,8 +17,37 @@ export default class GameObjectContainer {
         }
     }
 
-    position() {}
-    velocity() {}
+    position() {
+        let pos = {x: 0, y: 0};
+
+        for (let gO of this.gameObjects) {
+            let p = gO.position();
+            pos.x += p.x;
+            pos.y += p.y;
+        }
+
+        let len = this.gameObjects.length;
+        pos.x /= len;
+        pos.y /= len;
+
+        return pos
+    }
+
+    velocity() {
+        let vel = {x: 0, y: 0};
+
+        for (let gO of this.gameObjects) {
+            let v = gO.velocity();
+            vel.x += v.x;
+            vel.y += v.y;
+        }
+
+        let len = this.gameObjects.length;
+        vel.x /= len;
+        vel.y /= len;
+
+        return vel;
+    }
 
     applyForce(gameObject, force, from) {
         gameObject.applyForce(force, from);
@@ -66,8 +95,8 @@ export default class GameObjectContainer {
     }
 
     update() {
-        for (let gO of this.gameObjects) {
-            gO.update();
-        }
+        /*for (let gO of this.gameObjects) {
+        //    gO.update();
+    }*/
     }
 }

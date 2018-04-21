@@ -37,6 +37,10 @@ export default class GameObject {
         return this.physicsObj.bounds;
     }
 
+    centre() {
+        return Matter.Vertices.centre(this.physicsObj.vertices);
+    }
+
     position() {
         return this.physicsObj.position;
     }

@@ -45,10 +45,10 @@ Example.car = function() {
     const BLOCKS = 5;
     const WORLD_SCALE = 0.6;
 
-    var camera = new Camera(200, 200, 200, 300, 1, 1);
+    var camera = new Camera(200, 200, 200, 300);
+    camera.zoom(0.3);
 
     var renderer = new Renderer(camera);
-    renderer.scale(0.2);
 
     var world = new World(physics, renderer);
     var truck = new Truck(500, 50, 305);
@@ -65,6 +65,10 @@ Example.car = function() {
     world.addObject(truck);
 
     camera.follow(truck);
+
+    setTimeout(() => {
+        //camera.follow(objLoader);
+    }, 3000);
 
     world.debug(truck);
     world.debug(objLoader);

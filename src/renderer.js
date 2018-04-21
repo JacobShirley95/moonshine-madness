@@ -5,11 +5,11 @@ export default class Renderer {
         this.target = null;
 
         this.renderObjs = [];
-        this.camera = camera;
+        this.setCamera(camera);
     }
 
     scale(sc) {
-        this.camera.scale(sc);
+        //this.camera.zoom(sc);
         this.stage.scaleX *= this.stage.scaleY = sc;
     }
 
@@ -33,6 +33,10 @@ export default class Renderer {
     }
 
     update() {
+        this.stage.scaleX = this.camera.zoomX;
+        this.stage.scaleY = this.camera.zoomY;
+        this.camera.update();
+
         for (let renderObj of this.renderObjs) {
             renderObj.x -= this.camera.x;
             renderObj.y -= this.camera.y;
@@ -40,8 +44,6 @@ export default class Renderer {
             if (!renderObj._static) {
             }
         }
-
-        this.camera.update();
     }
 
     render() {

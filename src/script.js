@@ -43,30 +43,28 @@ Example.car = function() {
     const ff = 0.9;
 
     const BLOCKS = 5;
-    const WORLD_SCALE = 0.6;
+    const WORLD_SCALE = 1;
 
     var camera = new Camera(200, 200, 200, 300);
     camera.zoom(0.1);
-    camera.x -= 2000;
-    camera.y -= 2000;
 
     var renderer = new Renderer();
-    //renderer.scale(0.2);
+    renderer.scale(1);
 
     var shape = new createjs.Shape();
     let g = shape.graphics;
     g.beginFill("rgba(0, 0, 0, 0.5)").drawRect(0, 0, 1000, 100).endFill();
-    renderer.addObject(shape, 0);
+    renderer.addObject(shape, 6);
 
     var world = new World(physics, renderer, camera);
-    var truck = new Truck(500, 50, 305);
+    var truck = new Truck(2000, 50, 305);
     truck.addWheel(-290, 140, 82.5, 0.2, 0.1, 0.8);
     truck.addWheel(225, 140, 82.5, 0.2, 0.1, 0.8);
     truck.flipX();
-    truck.scale(WORLD_SCALE);
+    //truck.scale(WORLD_SCALE);
 
-    var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: 1});
-    var objLoader = new DynamicObjectLoader(mapLoader, {isStatic: true});
+    var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: WORLD_SCALE * 2});
+    var objLoader = new DynamicObjectLoader(mapLoader, {isStatic: true, outline: true, partWidth: 1000, partHeight: 1000, unloadDistance: 4000});
     objLoader.follow(truck);
 
     world.addObject(objLoader);
@@ -84,6 +82,34 @@ Example.car = function() {
     var left = false;
     var right = false;
     var stop = false;
+
+    var allowForce = false;
+
+    truck.load().then(() => {
+        Matter.Events.on(engine, 'collisionStart', function(event) {
+            var pairs = event.pairs;
+
+            // change object colours to show those starting a collision
+            for (var i = 0; i < pairs.length; i++) {
+                var pair = pairs[i];
+                if (pair.bodyA === truck.wheels[1].physicsObj || pair.bodyB === truck.wheels[1].physicsObj) {
+                    allowForce = true;
+                }
+            }
+        });
+
+        Matter.Events.on(engine, 'collisionEnd', function(event) {
+            var pairs = event.pairs;
+
+            // change object colours to show those starting a collision
+            for (var i = 0; i < pairs.length; i++) {
+                var pair = pairs[i];
+                if (pair.bodyA === truck.wheels[1].physicsObj || pair.bodyB === truck.wheels[1].physicsObj) {
+                    allowForce = false;
+                }
+            }
+        });
+    });
 
     document.addEventListener("keydown", function(ev) {
         if (ev.key == "a") {
@@ -107,14 +133,22 @@ Example.car = function() {
 
     var debug = document.getElementById("debug");
 
-    function draw() {
-        debug.innerHTML = "RenderX: " + Math.round(renderer.renderX)+"px" + "<br />RenderY: " + Math.round(renderer.renderY)+"px";
-        if (left) {
-            truck.wheels[1].applyTorque(-30);
-        }
+    const WHEEL_TORQUE = 5;
 
-        if (right) {
-            truck.wheels[1].applyTorque(30);
+    function draw() {
+        debug.innerHTML = "camera.x: " + Math.round(camera.x)+"px" + "<br />camera.y: " + Math.round(camera.y)+"px";
+
+        if (allowForce) {
+            if (left) {
+                truck.body.applyForce({x: -5, y: 0});
+            }
+
+            if (right) {
+                let pos = truck.body.position();
+                //pos.x += 1;
+                truck.body.applyForce({x: 6, y: 0.0}, pos);
+                //truck.wheels[1].applyTorque(WHEEL_TORQUE);
+            }
         }
 
         if (stop) {

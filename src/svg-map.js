@@ -30,16 +30,25 @@ export default class SVGMapLoader {
 
         this.promise = new Promise((resolve, reject) => {
             $.get(this.svgFile, (result) => {
+                this.svgString = result;
+
+                for (let el of $(result)) {
+                    if (el.tagName == "svg") {
+                        this.svgElement = el;
+                        break;
+                    }
+                }
+                //this.svgElement.innerHTML = result;
+
                 this.svg = SVG(this.svgElement).svg(result);
-                this.svgFirst = this.svg.select("svg").first();
+                this.svgFirst = this.svg;
 
                 var bounds = this.bounds(true);
                 var w = bounds.width;
                 var h = bounds.height;
 
                 this.svg.transform({x: bounds.x, y: bounds.y});
-                this.svg.size(w, h);
-                this.svg.attr('preserveAspectRatio', 'xMinYMin slice');
+                //this.svg.attr('preserveAspectRatio', 'xMinYMin slice');
 
                 resolve(this);
             }, "text");
@@ -62,6 +71,7 @@ export default class SVGMapLoader {
         if (typeof x !== 'undefined') {
             let scale = this.options.scale;
             let bnds = this.bounds(false);
+
 
             this.svg.transform({x: 0, y: 0});
             this.svg.size(width, height);
@@ -90,7 +100,7 @@ export default class SVGMapLoader {
                 console.log(height+","+img.height);
             }
 
-            this.svg.scale(1, 1);
+            //this.svg.scale(1, 1);
             this.svg.transform({x: 0, y: 0});
             this.svg.size(bnds.width, bnds.height);
             this.svgFirst.viewbox(bnds.x, bnds.y, bnds.width, bnds.height);
@@ -99,6 +109,7 @@ export default class SVGMapLoader {
             if (!this.img) {
                 this.img = new Image();
                 this.img.src = "data:image/svg+xml;utf8," + this.svg.svg();
+                //document.body.appendChild(this.svgElement.innerHTML);
             }
             return this.img;
         }
@@ -160,7 +171,7 @@ export default class SVGMapLoader {
         } else if (svgElement instanceof SVG.Path) {
             let vertices = [];
             let length = svgElement.length();
-            let steps = length / 100;
+            let steps = 10;
 
             for (let i = 0; i < length; i += steps) {
                 let p = svgElement.pointAt(i);

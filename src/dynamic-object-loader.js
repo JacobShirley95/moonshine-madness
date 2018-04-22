@@ -5,9 +5,6 @@ export default class DynamicObjectLoader extends ObjectLoader {
         super(loader, options);
         this.loadedParts = new Map();
 
-        this.offsetX = 1500;
-        this.offsetY = 1500;
-
         this.loadedX = 0;
         this.loadedY = 0;
 
@@ -58,11 +55,14 @@ export default class DynamicObjectLoader extends ObjectLoader {
         var dB = new createjs.Shape();
         let g = dB.graphics;
 
+
         let dimensions = this.dimensions();
         g.beginStroke("red").setStrokeStyle(8).drawRect(0, 0, dimensions.x, dimensions.y).endStroke();
         //container.addChild(dB);
 
         this.renderObj = container;
+
+        this.loadTexturePart(0, 0, this.options.partWidth, this.options.partHeight);
     }
 
     texturePartID(x, y, width, height) {
@@ -76,8 +76,9 @@ export default class DynamicObjectLoader extends ObjectLoader {
 
         let found = this.loadedParts.get(id);
         if (found) {
-            if (found.width >= width && found.height >= height)
+            if (found.width >= width && found.height >= height) {
                 return;
+            }
         }
 
         //width *= this.loader.scale();
@@ -88,7 +89,10 @@ export default class DynamicObjectLoader extends ObjectLoader {
 
         var centre = this.physicsObj.position;
         let bounds = this.physicsObj.bounds;
-        g.beginStroke("red").setStrokeStyle(8).drawRect(x, y, width, height).endStroke();
+
+        if (this.options.outline) {
+            g.beginStroke("red").setStrokeStyle(8).drawRect(x, y, width, height).endStroke();
+        }
 
         this.renderObj.addChild(dB);
 
@@ -119,7 +123,7 @@ export default class DynamicObjectLoader extends ObjectLoader {
 
     unloadTexturePartsByDist(dist) {
         let mods = this.directionMods();
-        let p = this.followPos(this.offsetX * mods.x, this.offsetY * mods.y);
+        let p = this.followPos(0, 0);
         let d2 = dist*dist;
 
         for (let part of this.loadedParts.values()) {
@@ -129,6 +133,7 @@ export default class DynamicObjectLoader extends ObjectLoader {
             let dy = c.y - p.y;
             let d = (dx*dx) + (dy*dy);
             if (d > d2) {
+                console.log("unloading");
                 this.loadedParts.delete(this.texturePartID(part.x, part.y));
                 this.renderObj.removeChild(part.obj);
                 this.renderObj.removeChild(part.debug);
@@ -140,10 +145,10 @@ export default class DynamicObjectLoader extends ObjectLoader {
         this.following = object;
     }
 
-    followPos() {
+    followPos(offX, offY) {
         var pos = this.following ? this.following.position() : {x: 0, y: 0};
 
-        return {x: pos.x + this.offsetX, y: pos.y + this.offsetY};
+        return {x: pos.x + offX, y: pos.y + offY};
     }
 
     directionMods() {
@@ -168,11 +173,11 @@ export default class DynamicObjectLoader extends ObjectLoader {
         return {x: part.x + (part.width / 2), y: part.y + (part.height / 2)};
     }
 
-    getClosestPart(pos) {
+    getClosestPart(pos, partWidth, partHeight) {
         let minDist = -1;
         let closest = null;
 
-        for (let part of this.loadedParts.values()) {
+        /*for (let part of this.loadedParts.values()) {
             let c = this.getCentre(part);
             let dx = c.x - pos.x;
             let dy = c.y - pos.y;
@@ -187,9 +192,18 @@ export default class DynamicObjectLoader extends ObjectLoader {
                     closest = part;
                 }
             }
-        }
+        }*/
 
-        return closest;
+        let x = (Math.round(pos.x / partWidth)) * partWidth;
+        let y = (Math.round(pos.y / partHeight)) * partHeight;
+
+        if (x < 0)
+            x = 0;
+
+        if (y < 0)
+            y = 0;
+
+        return {x, y, width: partWidth, height: partHeight};
     }
 
     update() {
@@ -200,40 +214,41 @@ export default class DynamicObjectLoader extends ObjectLoader {
 
         //var pos = this.following ? this.following.position() : {x: 0, y: 0};
 
-        const LD_WIDTH = 3000;
-        const LD_HEIGHT = 3000;
-
         let mods = this.directionMods();
-        let p = this.followPos(this.offsetX * mods.x, this.offsetY * mods.y);
+        let p = this.followPos(this.options.partWidth * mods.x, this.options.partHeight * mods.y);
 
         if (this.needsToLoad(p)) {
-            let closest = this.getClosestPart(p);
-            if (!closest) {
-                console.log("no closest");
-                this.loadTexturePart(0, 0, LD_WIDTH, LD_HEIGHT);
-                //this.loadTexturePart(0, LD_WIDTH, LD_WIDTH, LD_HEIGHT);
-                //this.loadTexturePart(LD_WIDTH, LD_HEIGHT * 1, LD_WIDTH, LD_HEIGHT);
-                //this.loadTexturePart(LD_WIDTH * 2, LD_HEIGHT * 4, LD_WIDTH, LD_HEIGHT);
-                //this.loadTexturePart(LD_WIDTH, 0, LD_WIDTH, LD_HEIGHT);
-                //this.loadTexturePart(LD_WIDTH, LD_HEIGHT, LD_WIDTH, LD_HEIGHT);
-            } else {
-                //console.log("loading");
-                let offX = mods.x * LD_WIDTH;
-                let offY = mods.y * LD_HEIGHT;
+            console.log("loading...");
+            let closest = this.getClosestPart(p, this.options.partWidth, this.options.partHeight);
+            let offX = mods.x * this.options.partWidth;
+            let offY = mods.y * this.options.partHeight;
 
-                if (offX > 0)
-                    this.loadTexturePart(closest.x + offX, closest.y, LD_WIDTH, LD_HEIGHT);
+            this.loadTexturePart(closest.x - this.options.partWidth, closest.y - this.options.partHeight, this.options.partWidth, this.options.partHeight);
+            this.loadTexturePart(closest.x, closest.y, this.options.partWidth, this.options.partHeight);
 
-                if (offX > 0 && offY > 0)
-                    this.loadTexturePart(closest.x + offX, closest.y + offY, LD_WIDTH, LD_HEIGHT);
+            this.loadTexturePart(closest.x - offX, closest.y, this.options.partWidth, this.options.partHeight);
+            this.loadTexturePart(closest.x + offX, closest.y, this.options.partWidth, this.options.partHeight);
 
-                if (offY > 0)
-                    this.loadTexturePart(closest.x, closest.y + offY, LD_WIDTH, LD_HEIGHT);//*/
-            }
+            this.loadTexturePart(closest.x - offX, closest.y - offY, this.options.partWidth, this.options.partHeight);
+            this.loadTexturePart(closest.x - offX, closest.y + offY, this.options.partWidth, this.options.partHeight);
+            this.loadTexturePart(closest.x + offX, closest.y - offY, this.options.partWidth, this.options.partHeight);
+            this.loadTexturePart(closest.x + offX, closest.y + offY, this.options.partWidth, this.options.partHeight);
+
+            this.loadTexturePart(closest.x, closest.y - offY, this.options.partWidth, this.options.partHeight);
+            this.loadTexturePart(closest.x, closest.y + offY, this.options.partWidth, this.options.partHeight);
+
+            /*if (offX != 0)
+                this.loadTexturePart(closest.x, closest.y, this.options.partWidth, this.options.partHeight);
+
+            if (offX != 0 && offY != 0)
+                this.loadTexturePart(closest.x, closest.y, this.options.partWidth, this.options.partHeight);
+
+            if (offY != 0)
+                this.loadTexturePart(closest.x, closest.y, this.options.partWidth, this.options.partHeight);//*/
 
             this.loaded = true;
         }
 
-        this.unloadTexturePartsByDist(5000);
+        this.unloadTexturePartsByDist(this.options.unloadDistance);
     }
 }

@@ -55,7 +55,8 @@ export default class GameObject {
     }
 
     applyForce(force, from) {
-        Matter.Body.applyForce(this.physicsObj, force, from);
+        from = from || this.position();
+        Matter.Body.applyForce(this.physicsObj, from, force);
     }
 
     applyTorque(torque) {

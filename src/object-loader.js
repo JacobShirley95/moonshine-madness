@@ -87,8 +87,10 @@ export default class ObjectLoader extends GameObject {
         var bitmap = new createjs.Bitmap(tex);
         var centre = this.position();
 
-        bitmap.regX += centre.x;
-        bitmap.regY += centre.y;
+        tex.onload = () => {
+            bitmap.regX += tex.width / 2;
+            bitmap.regY += tex.height / 2;
+        }
 
         this.renderObj = bitmap;
     }

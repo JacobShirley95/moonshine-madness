@@ -46,18 +46,26 @@ Example.car = function() {
     const WORLD_SCALE = 0.6;
 
     var camera = new Camera(200, 200, 200, 300);
-    camera.zoom(0.3);
+    camera.zoom(0.1);
+    camera.x -= 2000;
+    camera.y -= 2000;
 
-    var renderer = new Renderer(camera);
+    var renderer = new Renderer();
+    //renderer.scale(0.2);
 
-    var world = new World(physics, renderer);
+    var shape = new createjs.Shape();
+    let g = shape.graphics;
+    g.beginFill("rgba(0, 0, 0, 0.5)").drawRect(0, 0, 1000, 100).endFill();
+    renderer.addObject(shape, 0);
+
+    var world = new World(physics, renderer, camera);
     var truck = new Truck(500, 50, 305);
     truck.addWheel(-290, 140, 82.5, 0.2, 0.1, 0.8);
     truck.addWheel(225, 140, 82.5, 0.2, 0.1, 0.8);
     truck.flipX();
     truck.scale(WORLD_SCALE);
 
-    var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: WORLD_SCALE});
+    var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: 1});
     var objLoader = new DynamicObjectLoader(mapLoader, {isStatic: true});
     objLoader.follow(truck);
 

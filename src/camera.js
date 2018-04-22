@@ -12,6 +12,8 @@ export default class Camera {
         this.zoomX = zoomX;
         this.zoomY = zoomY;
 
+        this.updateMatrix();
+
         this.lockspeed = 1.0;
 
         this.target = null;
@@ -23,6 +25,8 @@ export default class Camera {
 
         this.zoomX = x;
         this.zoomY = y;
+
+        this.updateMatrix();
     }
 
     follow(object) {
@@ -33,6 +37,25 @@ export default class Camera {
         } else {
             this.target = object;
         }
+    }
+
+    applyTransform(gameObjects) {
+        for (let gameObj of gameObjects) {
+            let renderObj = gameObj.renderObj;
+            if (renderObj) {
+                let cM = new createjs.Matrix2D();
+                cM.appendTransform(renderObj.x, renderObj.y, renderObj.scaleX, renderObj.scaleY, renderObj.rotation, renderObj.skewX, renderObj.skewY, renderObj.regX, renderObj.regY);
+                cM.prependMatrix(this.matrix);
+                renderObj.transformMatrix = cM;
+            }
+        }
+
+        //this.zoomX = this.zoomY = 1;
+    }
+
+    updateMatrix() {
+        this.matrix = new createjs.Matrix2D();
+        this.matrix.appendTransform(-this.x * this.zoomX, -this.y * this.zoomY, this.zoomX, this.zoomY, 0, 0, 0, 0, 0);
     }
 
     update() {
@@ -68,5 +91,7 @@ export default class Camera {
             this.y += maxY - this.maxY;
             this.y *= this.lockspeed;
         }
+
+        this.updateMatrix();
     }
 }

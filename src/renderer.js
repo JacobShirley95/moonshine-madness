@@ -1,11 +1,7 @@
 export default class Renderer {
-    constructor(camera) {
+    constructor() {
         this.stage = new createjs.Stage("game");
-
-        this.target = null;
-
         this.renderObjs = [];
-        this.setCamera(camera);
     }
 
     scale(sc) {
@@ -24,26 +20,7 @@ export default class Renderer {
         this.stage.setChildIndex(renderObj, layer);
     }
 
-    follow(object) {
-        this.camera.follow(object);
-    }
-
-    setCamera(camera) {
-        this.camera = camera;
-    }
-
     update() {
-        this.stage.scaleX = this.camera.zoomX;
-        this.stage.scaleY = this.camera.zoomY;
-        this.camera.update();
-
-        for (let renderObj of this.renderObjs) {
-            renderObj.x -= this.camera.x;
-            renderObj.y -= this.camera.y;
-
-            if (!renderObj._static) {
-            }
-        }
     }
 
     render() {

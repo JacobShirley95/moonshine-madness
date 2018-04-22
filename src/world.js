@@ -4,10 +4,11 @@ import CompositeGameObject from "./composite-game-object.js";
 import GameObjectContainer from "./game-object-container.js";
 
 export default class World {
-    constructor(physics, renderer) {
+    constructor(physics, renderer, camera) {
         this.physics = physics;
         this.renderer = renderer;
         this.gameObjects = [];
+        this.camera = camera;
     }
 
     getLoadableChildren(obj, results, depth = 0) {
@@ -37,7 +38,20 @@ export default class World {
                     this.addObject(gO, depth + 1);
 
             if (depth == 0) {
-                Matter.World.add(this.physics, obj instanceof CompositeGameObject ? obj.composite : obj.physicsObj);
+                if (obj instanceof CompositeGameObject) {
+                    Matter.World.add(this.physics, obj.composite);
+                } else {
+                    let parts = obj.physicsObj.parts;
+                    if (obj.physicsObj.isStatic && parts.length > 1) {
+                        for (let i = 1; i < parts.length; i++) {
+                            let p = parts[i];
+                            p.parent = p;
+                            Matter.World.add(this.physics, p);
+                        }
+                    } else {
+                        Matter.World.add(this.physics, obj);
+                    }
+                }
             }
         }
 
@@ -51,9 +65,6 @@ export default class World {
 
         //if (depth == 0)
         this.gameObjects.push(gameObject);
-    }
-
-    follow(gameObject) {
     }
 
     debug(gO) {
@@ -71,6 +82,8 @@ export default class World {
             gO.update();
         }
 
+        this.camera.update();
+        this.camera.applyTransform(this.gameObjects);
         this.renderer.update();
     }
 }

@@ -41,6 +41,7 @@ export default class ObjectLoader extends GameObject {
 
     create(collisionShapes) {
         var bodies = [];
+
         for (let shape of collisionShapes) {
             var b = null;
             let options = Object.assign({angle: shape.rotation}, this.options);
@@ -75,7 +76,6 @@ export default class ObjectLoader extends GameObject {
         delete options.mass;
 
         this.physicsObj = Matter.Body.create(options);
-
         //if (this.options.position)
         //    Matter.Body.setPosition(this.physicsObj, this.options.position);
 

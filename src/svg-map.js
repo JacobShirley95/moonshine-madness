@@ -1,15 +1,5 @@
-function ellipseVertices(x, y, rx, ry, step) {
-    var vertices = [];
-
-    for (let i = -Math.PI; i < Math.PI; i += step) {
-        let _x = Math.sin(i) * rx;
-        let _y = Math.cos(i) * ry;
-
-        vertices.push({x: x + _x, y: y + _y});
-    }
-
-    return vertices;
-}
+import Geom from "./geom.js";
+import Texture from "./texture.js";
 
 export default class SVGMapLoader {
     constructor(svgFile, options, callback) {
@@ -41,14 +31,13 @@ export default class SVGMapLoader {
                 //this.svgElement.innerHTML = result;
 
                 this.svg = SVG(this.svgElement).svg(result);
-                this.svgFirst = this.svg;
 
-                var bounds = this.bounds(true);
-                var w = bounds.width;
-                var h = bounds.height;
+                let bounds = this.bounds(true);
+                let w = bounds.width;
+                let h = bounds.height;
 
                 this.svg.transform({x: bounds.x, y: bounds.y});
-                //this.svg.attr('preserveAspectRatio', 'xMinYMin slice');
+                this.svg.attr('preserveAspectRatio', 'none');
 
                 resolve(this);
             }, "text");
@@ -72,7 +61,6 @@ export default class SVGMapLoader {
             let scale = this.options.scale;
             let bnds = this.bounds(false);
 
-
             this.svg.transform({x: 0, y: 0});
             this.svg.size(width, height);
 
@@ -83,71 +71,77 @@ export default class SVGMapLoader {
             width *= invScale;
             height *= invScale;
 
-            this.svgFirst.viewbox(bnds.x + x, bnds.y + y, width, height);
+            this.svg.viewbox(bnds.x + x, bnds.y + y, width, height);
 
             let img = new Image();
             img.src = "data:image/svg+xml;utf8," + this.svg.svg();
-
-            var can = document.createElement("canvas");
-            can.setAttribute("width", Math.round((width + x) * scale));
-            can.setAttribute("height", Math.round((height + y) * scale));
-
-            var ctx = can.getContext("2d");
-
             img.onload = () => {
-                //ctx.drawImage(img, 0, 0, (width + x) * scale, (height + y) * scale);
-                console.log(width+", "+img.width);
-                console.log(height+","+img.height);
+                console.log(img.width);
+                console.log(img.height);
             }
 
-            //this.svg.scale(1, 1);
+            document.body.appendChild(img);
+
             this.svg.transform({x: 0, y: 0});
             this.svg.size(bnds.width, bnds.height);
-            this.svgFirst.viewbox(bnds.x, bnds.y, bnds.width, bnds.height);
-            return img;
+            this.svg.viewbox(bnds.x, bnds.y, bnds.width, bnds.height);
+
+            return new Texture(x, y, width, height, img);
         } else {
             if (!this.img) {
-                this.img = new Image();
-                this.img.src = "data:image/svg+xml;utf8," + this.svg.svg();
-                //document.body.appendChild(this.svgElement.innerHTML);
+                let img = new Image();
+                img.src = "data:image/svg+xml;utf8," + this.svg.svg();
+
+                let w = this.svg.attr("width");
+                let h = this.svg.attr("height");
+
+                this.img = new Texture(0, 0, w, h, img);
             }
             return this.img;
         }
-        //}
     }
 
     bounds(scaled) {
         if (scaled) {
             let scale = this.options.scale;
-            let bnds = this.svgFirst.viewbox();
+            let bnds = this.svg.viewbox();
             bnds.width *= scale;
             bnds.height *= scale;
             return bnds;
         } else
-            return this.svgFirst.viewbox();
+            return this.svg.viewbox();
     }
 
-    getCollisionShapes() {
-        var shapeElements = this.svg.select("#collision rect, #collision path, #collision line, #collision polyline, #collision polygon, #collision circle, #collision ellipse");
+    getCollisionShapes(x, y, width, height) {
+        let shapeElements = this.svg.select("#collision rect, #collision path, #collision line, #collision polyline, #collision polygon, #collision circle, #collision ellipse");
+        let collisionShapes = [];
+        let box = {x, y, width, height};
 
-        var collisionShapes = [];
-        shapeElements.each((i, child) => {
-            collisionShapes.push(this.getShape(child[i]));
-        });
+        if (typeof x === 'undefined') {
+            shapeElements.each((i, child) => {
+                collisionShapes.push(this.getShape(child[i]));
+            });
+        } else {
+            shapeElements.each((i, child) => {
+                let el = child[i];
+
+                if (Geom.inBox({x: el.x(), y: el.y()}, box)) {
+                    collisionShapes.push(this.getShape(el));
+                }
+
+            });
+        }
 
         return collisionShapes;
     }
 
     getShape(svgElement) {
-        var scale = this.options.scale;
-        var bounds = this.bounds();
+        let scale = this.options.scale;
+        let bounds = this.bounds();
 
-        //svgElement.dx(-bounds.x);
-        //svgElement.dy(-bounds.y);
-
-        var width = svgElement.width() * scale;
-        var height = svgElement.height() * scale;
-        var rotation = svgElement.transform("rotation") / 180 * Math.PI;
+        let width = svgElement.width() * scale;
+        let height = svgElement.height() * scale;
+        let rotation = svgElement.transform("rotation") / 180 * Math.PI;
 
         let cx = (svgElement.cx() - bounds.x) * scale;
         let cy = (svgElement.cy() - bounds.y) * scale;
@@ -165,7 +159,7 @@ export default class SVGMapLoader {
             let rx = svgElement.attr('rx') * scale;
             let ry = svgElement.attr('ry') * scale;
 
-            let vertices = ellipseVertices(cx, cy, rx, ry, 50 / Math.max(rx, ry));
+            let vertices = Geom.ellipseVertices(cx, cy, rx, ry, 50 / Math.max(rx, ry));
 
             return {cx, cy, rx, ry, vertices, rotation, type: "ellipse"};
         } else if (svgElement instanceof SVG.Path) {

@@ -27,15 +27,22 @@ export default class World {
         return results;
     }
 
-    addObject(gameObject, depth = 0) {
+    setCamera(camera) {
+        this.camera = camera;
+    }
+
+    addObject(gameObject, layer, depth = 0) {
+        if (typeof layer === 'undefined')
+            layer = gameObject.layer();
+
         let add = (obj) => {
             if (obj.renderObj != null) {
-                this.renderer.addObject(obj.renderObj, obj.layer());
+                this.renderer.addObject(obj.renderObj, layer);
             }
 
             if (obj instanceof GameObjectContainer)
                 for (let gO of obj.gameObjects)
-                    this.addObject(gO, depth + 1);
+                    this.addObject(gO, layer, depth + 1);
 
             if (depth == 0) {
                 if (obj instanceof CompositeGameObject) {
@@ -60,6 +67,7 @@ export default class World {
                 add(gameObject);
             });
         } else {
+            console.log(gameObject);
             add(gameObject);
         }
 

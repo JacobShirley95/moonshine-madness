@@ -57,12 +57,13 @@ export default class DynamicObjectLoader extends ObjectLoader {
 
 
         let dimensions = this.dimensions();
-        g.beginStroke("red").setStrokeStyle(8).drawRect(0, 0, dimensions.x, dimensions.y).endStroke();
+        //g.beginStroke("red").setStrokeStyle(8).drawRect(0, 0, dimensions.x, dimensions.y).endStroke();
         //container.addChild(dB);
 
         this.renderObj = container;
 
-        this.loadTexturePart(0, 0, this.options.partWidth, this.options.partHeight);
+        let wDims = this.camera.worldDimensions();
+        this.loadTexturePart(0, 0, wDims.x, wDims.y);
     }
 
     texturePartID(x, y, width, height) {
@@ -81,29 +82,42 @@ export default class DynamicObjectLoader extends ObjectLoader {
             }
         }
 
-        //width *= this.loader.scale();
-        //height *= this.loader.scale();
-
         var dB = new createjs.Shape();
         let g = dB.graphics;
 
         var centre = this.physicsObj.position;
         let bounds = this.physicsObj.bounds;
 
+        let part = {x, y, width, height};
+
         if (this.options.outline) {
+            /*let p = this.camera.screenToWorld(x, y);
+            let p2 = this.camera.screenToWorld(x + width, y + height);
+
+            let p = this.camera.scaleDimensions(width, height);
+            //width = p.x;
+            //height = p.y;
+
+            //x = p.x;
+            //y = p.y;
+            width = p2.x - p.x;
+            height = p2.y - p.y;*/
+
             g.beginStroke("red").setStrokeStyle(8).drawRect(x, y, width, height).endStroke();
         }
 
         this.renderObj.addChild(dB);
 
         let tex = this.loader.getTexture(x, y, width, height);
-        var bitmap = new createjs.Bitmap(tex);
+        var bitmap = new createjs.Bitmap(tex.getImage());
 
         bitmap.x = x;
         bitmap.y = y;
+
         this.renderObj.addChild(bitmap);
 
-        let part = {x, y, width, height, obj: bitmap, debug: dB};
+        part.obj = bitmap;
+        part.debug = dB;
         this.loadedParts.set(id, part);
 
         this.loadedX += width;
@@ -142,20 +156,31 @@ export default class DynamicObjectLoader extends ObjectLoader {
     }
 
     follow(object) {
-        this.following = object;
+        this.camera = object;
     }
 
     followPos(offX, offY) {
-        var pos = this.following ? this.following.position() : {x: 0, y: 0};
+        var pos = this.camera.screenToWorld(0, 0);
 
-        return {x: pos.x + offX, y: pos.y + offY};
+        pos.x += offX;
+        pos.y += offY;
+
+        if (pos.x < 0)
+            pos.x = 0;
+
+        if (pos.y < 0)
+            pos.y = 0;
+
+        //console.log(pos);
+
+        return pos;
     }
 
     directionMods() {
-        if (!this.following)
+        if (!this.camera)
             return {x: 0, y: 0};
 
-        let vel = this.following.velocity();
+        let vel = this.camera.velocity();
         return {x: Math.sign(vel.x), y: Math.sign(vel.y)};
     }
 
@@ -177,23 +202,6 @@ export default class DynamicObjectLoader extends ObjectLoader {
         let minDist = -1;
         let closest = null;
 
-        /*for (let part of this.loadedParts.values()) {
-            let c = this.getCentre(part);
-            let dx = c.x - pos.x;
-            let dy = c.y - pos.y;
-
-            if (minDist == -1) {
-                minDist = (dx*dx) + (dy*dy);
-                closest = part;
-            } else {
-                let d = (dx*dx) + (dy*dy);
-                if (d < minDist) {
-                    minDist = d;
-                    closest = part;
-                }
-            }
-        }*/
-
         let x = (Math.round(pos.x / partWidth)) * partWidth;
         let y = (Math.round(pos.y / partHeight)) * partHeight;
 
@@ -212,43 +220,34 @@ export default class DynamicObjectLoader extends ObjectLoader {
         if (!this.renderObj)
             return;
 
-        //var pos = this.following ? this.following.position() : {x: 0, y: 0};
+        //var pos = this.camera ? this.camera.position() : {x: 0, y: 0};
 
         let mods = this.directionMods();
-        let p = this.followPos(this.options.partWidth * mods.x, this.options.partHeight * mods.y);
+        let worldDim = this.camera.worldDimensions();
+
+        let p = this.followPos(worldDim.x * mods.x, worldDim.y * mods.y);
 
         if (this.needsToLoad(p)) {
-            console.log("loading...");
-            let closest = this.getClosestPart(p, this.options.partWidth, this.options.partHeight);
-            let offX = mods.x * this.options.partWidth;
-            let offY = mods.y * this.options.partHeight;
+            p = this.followPos(0, 0);
+            let closest = this.getClosestPart(p, worldDim.x, worldDim.y);
+            let offX = mods.x * worldDim.x;
+            let offY = mods.y * worldDim.y;
 
-            this.loadTexturePart(closest.x - this.options.partWidth, closest.y - this.options.partHeight, this.options.partWidth, this.options.partHeight);
-            this.loadTexturePart(closest.x, closest.y, this.options.partWidth, this.options.partHeight);
+            //this.loadTexturePart(0, 0, worldDim.x, worldDim.y);
+            this.loadTexturePart(closest.x, closest.y, worldDim.x, worldDim.y);
 
-            this.loadTexturePart(closest.x - offX, closest.y, this.options.partWidth, this.options.partHeight);
-            this.loadTexturePart(closest.x + offX, closest.y, this.options.partWidth, this.options.partHeight);
-
-            this.loadTexturePart(closest.x - offX, closest.y - offY, this.options.partWidth, this.options.partHeight);
-            this.loadTexturePart(closest.x - offX, closest.y + offY, this.options.partWidth, this.options.partHeight);
-            this.loadTexturePart(closest.x + offX, closest.y - offY, this.options.partWidth, this.options.partHeight);
-            this.loadTexturePart(closest.x + offX, closest.y + offY, this.options.partWidth, this.options.partHeight);
-
-            this.loadTexturePart(closest.x, closest.y - offY, this.options.partWidth, this.options.partHeight);
-            this.loadTexturePart(closest.x, closest.y + offY, this.options.partWidth, this.options.partHeight);
-
-            /*if (offX != 0)
-                this.loadTexturePart(closest.x, closest.y, this.options.partWidth, this.options.partHeight);
+            if (offX != 0)
+                this.loadTexturePart(closest.x + offX, closest.y, worldDim.x, worldDim.y);
 
             if (offX != 0 && offY != 0)
-                this.loadTexturePart(closest.x, closest.y, this.options.partWidth, this.options.partHeight);
+                this.loadTexturePart(closest.x + offX, closest.y + offY, worldDim.x, worldDim.y);
 
             if (offY != 0)
-                this.loadTexturePart(closest.x, closest.y, this.options.partWidth, this.options.partHeight);//*/
+                this.loadTexturePart(closest.x, closest.y + offY, worldDim.x, worldDim.y);//*/
 
             this.loaded = true;
         }
 
-        this.unloadTexturePartsByDist(this.options.unloadDistance);
+        //this.unloadTexturePartsByDist(this.options.unloadDistance);
     }
 }

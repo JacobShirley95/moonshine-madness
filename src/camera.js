@@ -1,7 +1,13 @@
 export default class Camera {
-    constructor(minX, minY, maxX, maxY, zoomX, zoomY) {
+    constructor(width, height, minX, minY, maxX, maxY, zoomX = 1, zoomY = 1) {
         this.x = 0;
         this.y = 0;
+
+        this.width = width;
+        this.height = height;
+
+        this.xVel = 0;
+        this.yVel = 0;
 
         this.minX = minX;
         this.minY = minY;
@@ -17,6 +23,30 @@ export default class Camera {
         this.lockspeed = 1.0;
 
         this.target = null;
+    }
+
+    position() {
+        return {x: this.x, y: this.y};
+    }
+
+    velocity() {
+        return {x: this.xVel, y: this.yVel};
+    }
+
+    worldDimensions() {
+        return {x: this.width * (1/this.zoomX), y: this.height * (1/this.zoomY)};
+    }
+
+    worldToScreen(x, y) {
+        let p = this.matrix.transformPoint(x, y);
+        //p.y *= -1;
+        return p;
+    }
+
+    screenToWorld(x, y) {
+        let p = this.invMatrix.transformPoint(x, y);
+        //p.y *= -1;
+        return p;
     }
 
     zoom(x, y) {
@@ -56,6 +86,8 @@ export default class Camera {
     updateMatrix() {
         this.matrix = new createjs.Matrix2D();
         this.matrix.appendTransform(-this.x * this.zoomX, -this.y * this.zoomY, this.zoomX, this.zoomY, 0, 0, 0, 0, 0);
+
+        this.invMatrix = this.matrix.clone().invert();
     }
 
     update() {
@@ -67,30 +99,33 @@ export default class Camera {
 
         if (this.target != null) {
             let pos = this.target.position();
-            let p2 = {x: pos.x - this.x, y: pos.y - this.y};
+            let p2 = this.worldToScreen(pos.x, pos.y);
 
-            minX = Math.min(minX, p2.x * this.zoomX);
-            maxX = Math.max(maxX, p2.x * this.zoomX);
+            minX = Math.min(minX, p2.x);
+            maxX = Math.max(maxX, p2.x);
 
-            minY = Math.min(minY, p2.y * this.zoomY);
-            maxY = Math.max(maxY, p2.y * this.zoomY);
+            minY = Math.min(minY, p2.y);
+            maxY = Math.max(maxY, p2.y);
         }
 
         if (minX < this.minX) {
-            this.x -= this.minX - minX;
-            this.x *= this.lockspeed;
+            this.xVel = minX - this.minX;
         } else if (maxX > this.maxX) {
-            this.x += maxX - this.maxX;
-            this.x *= this.lockspeed;
+            this.xVel = maxX - this.maxX;
+        } else {
+            this.xVel = 0;
         }
 
         if (minY < this.minY) {
-            this.y -= this.minY - minY;
-            this.y *= this.lockspeed;
+            this.yVel = minY - this.minY;
         } else if (maxY > this.maxY) {
-            this.y += maxY - this.maxY;
-            this.y *= this.lockspeed;
+            this.yVel = maxY - this.maxY;
+        } else {
+            this.yVel = 0;
         }
+
+        this.x += this.xVel;
+        this.y += this.yVel;
 
         this.updateMatrix();
     }

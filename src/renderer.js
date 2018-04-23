@@ -1,7 +1,10 @@
 export default class Renderer {
     constructor() {
         this.stage = new createjs.Stage("game");
+        this.stage.snapToPixelEnabled = true;
         this.renderObjs = [];
+        this.width = $("#game").width();
+        this.height = $("#game").height();
     }
 
     scale(sc) {

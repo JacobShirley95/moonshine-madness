@@ -5,7 +5,6 @@ import World from "./world.js";
 import SVGMapLoader from "./svg-map.js";
 import ObjectLoader from "./object-loader.js";
 import DynamicObjectLoader from "./dynamic-object-loader.js";
-import SVGTexture from "./svg-texture.js";
 import Camera from "./camera.js";
 
 var Example = Example || {};
@@ -43,41 +42,48 @@ Example.car = function() {
     const ff = 0.9;
 
     const BLOCKS = 5;
-    const WORLD_SCALE = 1;
+    const WORLD_SCALE = 0.7;
 
-    var camera = new Camera(200, 200, 200, 300);
-    camera.zoom(0.1);
+    var camera = new Camera(1000, 700, 200, 200, 500, 500);
+    camera.zoom(0.2);
+
+    var camera2 = new Camera(1000, 700, 200, 200, 500, 500);
+    camera2.x = 0;
+    camera2.y = 0;
 
     var renderer = new Renderer();
     renderer.scale(1);
+    //console.log(renderer.width+", "+renderer.height);
 
     var shape = new createjs.Shape();
     let g = shape.graphics;
     g.beginFill("rgba(0, 0, 0, 0.5)").drawRect(0, 0, 1000, 100).endFill();
-    renderer.addObject(shape, 6);
+    renderer.addObject(shape, 2);
 
     var world = new World(physics, renderer, camera);
-    var truck = new Truck(2000, 50, 305);
+    var truck = new Truck(550, 50, 305);
     truck.addWheel(-290, 140, 82.5, 0.2, 0.1, 0.8);
     truck.addWheel(225, 140, 82.5, 0.2, 0.1, 0.8);
     truck.flipX();
-    //truck.scale(WORLD_SCALE);
+    truck.scale(WORLD_SCALE);
 
-    var mapLoader = new SVGMapLoader("assets/maps/test.svg", {scale: WORLD_SCALE * 2});
-    var objLoader = new DynamicObjectLoader(mapLoader, {isStatic: true, outline: true, partWidth: 1000, partHeight: 1000, unloadDistance: 4000});
-    objLoader.follow(truck);
+    var mapLoader = new SVGMapLoader("assets/maps/test3.svg", {scale: WORLD_SCALE});
+    var objLoader = new DynamicObjectLoader(mapLoader, {isStatic: true, outline: false, partWidth: 1000, partHeight: 700, unloadDistance: 4000});
+    objLoader.follow(camera);
 
-    world.addObject(objLoader);
-    world.addObject(truck);
+    world.addObject(objLoader, 5);
+    world.addObject(truck, 1);
 
     camera.follow(truck);
+    camera2.follow(truck);
 
     setTimeout(() => {
-        //camera.follow(objLoader);
+        world.setCamera(camera2);
+        objLoader.follow(camera2);
     }, 3000);
 
-    world.debug(truck);
-    world.debug(objLoader);
+    //world.debug(truck);
+    //world.debug(objLoader);
 
     var left = false;
     var right = false;
@@ -136,17 +142,20 @@ Example.car = function() {
     const WHEEL_TORQUE = 5;
 
     function draw() {
-        debug.innerHTML = "camera.x: " + Math.round(camera.x)+"px" + "<br />camera.y: " + Math.round(camera.y)+"px";
+        let pos = camera.position();
+
+        debug.innerHTML = "camera.x: " + Math.round(pos.x)+"px" + "<br />camera.y: " + Math.round(pos.y)+"px";
+        debug.innerHTML += "<br />camera.xVel: " + Math.round(camera.xVel)+"px" + "<br />camera.yVel: " + Math.round(camera.yVel)+"px";
 
         if (allowForce) {
             if (left) {
-                truck.body.applyForce({x: -5, y: 0});
+                truck.body.applyForce({x: -5 * WORLD_SCALE * WORLD_SCALE, y: 0});
             }
 
             if (right) {
                 let pos = truck.body.position();
                 //pos.x += 1;
-                truck.body.applyForce({x: 6, y: 0.0}, pos);
+                truck.body.applyForce({x: 6 * WORLD_SCALE * WORLD_SCALE, y: 0.0}, pos);
                 //truck.wheels[1].applyTorque(WHEEL_TORQUE);
             }
         }

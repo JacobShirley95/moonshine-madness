@@ -1,12 +1,14 @@
 import GameObject from "./game-object.js";
+import Layer from "./layer.js";
 
 export default class GameObjectContainer {
-    constructor(...gameObjects) {
+    constructor(layer = 0, ...gameObjects) {
         this.gameObjects = gameObjects || [];
+        this.layerNum = layer;
     }
 
     layer() {
-        return 0;
+        return this.layerNum;
     }
 
     flipX(onlyRenderObj) {
@@ -15,7 +17,7 @@ export default class GameObjectContainer {
         }
     }
 
-    flipY() {
+    flipY(onlyRenderObj) {
         for (let gO of this.gameObjects) {
             gO.flipY(onlyRenderObj);
         }
@@ -65,18 +67,13 @@ export default class GameObjectContainer {
         gameObject.setAngularVelocity(vel);
     }
 
-    setVisible(flag) {
-        if (this.renderObj)
-            this.renderObj.visible = flag;
-    }
-
     createDebugObject() {
         let dbgs = [];
         for (let gO of this.gameObjects) {
             dbgs.push(gO.createDebugObject());
         }
 
-        return new GameObjectContainer(...dbgs);
+        return new GameObjectContainer(Layer.DEBUG, ...dbgs);
     }
 
     scale(x, y, onlyRenderObj) {

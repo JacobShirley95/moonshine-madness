@@ -1,16 +1,16 @@
 import GameObjectContainer from "./game-object-container.js";
 
 export default class CompositeGameObject extends GameObjectContainer {
-    constructor(composite, ...gameObjects) {
-        super(...gameObjects);
+    constructor(composite, layer = 0, ...gameObjects) {
+        super(layer, ...gameObjects);
         this.composite = composite;
     }
 
-    /*position() {
+    position() {
         let bounds = Matter.Composite.bounds(this.composite);
 
         return {x: (bounds.min.x + bounds.max.x) / 2, y: (bounds.min.y + bounds.max.y) / 2};
-    }*/
+    }
 
     scale(x = 1, y) {
         if (typeof y === 'undefined')

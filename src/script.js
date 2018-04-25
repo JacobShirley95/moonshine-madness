@@ -6,6 +6,7 @@ import SVGMapLoader from "./svg-map.js";
 import ObjectLoader from "./object-loader.js";
 import DynamicObjectLoader from "./dynamic-object-loader.js";
 import Camera from "./camera.js";
+import Scene from "./scene.js";
 
 var Example = Example || {};
 
@@ -51,21 +52,22 @@ Example.car = function() {
     camera2.x = 0;
     camera2.y = 0;
 
+    var scene = new Scene(camera);
+
     var renderer = new Renderer();
     renderer.scale(1);
     //console.log(renderer.width+", "+renderer.height);
 
     var shape = new createjs.Shape();
     let g = shape.graphics;
-    g.beginFill("rgba(0, 0, 0, 0.5)").drawRect(0, 0, 1000, 100).endFill();
+    g.beginFill("rgba(0, 0, 0, 0.1)").drawRect(0, 0, 1000, 100).endFill();
     renderer.addObject(shape, 2);
 
     var world = new World(physics, renderer, camera);
     var truck = new Truck(550, 50, 305);
     truck.addWheel(-290, 140, 82.5, 0.2, 0.1, 0.8);
     truck.addWheel(225, 140, 82.5, 0.2, 0.1, 0.8);
-    truck.flipX();
-    truck.scale(WORLD_SCALE);
+    truck.scale(-WORLD_SCALE, WORLD_SCALE);
 
     var mapLoader = new SVGMapLoader("assets/maps/test3.svg", {scale: WORLD_SCALE});
     var objLoader = new DynamicObjectLoader(mapLoader, {isStatic: true, outline: false, partWidth: 1000, partHeight: 700, unloadDistance: 4000});
@@ -77,9 +79,13 @@ Example.car = function() {
     camera.follow(truck);
     camera2.follow(truck);
 
+    scene.addObject(truck);
+    scene.addObject(objLoader);
+    renderer.addObject(scene);
+
     setTimeout(() => {
-        world.setCamera(camera2);
-        objLoader.follow(camera2);
+        //scene.setCamera(camera2);
+        //objLoader.follow(camera2);
     }, 3000);
 
     //world.debug(truck);
@@ -167,6 +173,7 @@ Example.car = function() {
         //truck.update();
         world.update();
 
+        scene.update();
         renderer.render();
 
         requestAnimationFrame(draw);

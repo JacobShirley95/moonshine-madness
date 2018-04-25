@@ -80,8 +80,6 @@ export default class SVGMapLoader {
                 console.log(img.height);
             }
 
-            document.body.appendChild(img);
-
             this.svg.transform({x: 0, y: 0});
             this.svg.size(bnds.width, bnds.height);
             this.svg.viewbox(bnds.x, bnds.y, bnds.width, bnds.height);

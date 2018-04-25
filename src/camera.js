@@ -69,20 +69,6 @@ export default class Camera {
         }
     }
 
-    applyTransform(gameObjects) {
-        for (let gameObj of gameObjects) {
-            let renderObj = gameObj.renderObj;
-            if (renderObj) {
-                let cM = new createjs.Matrix2D();
-                cM.appendTransform(renderObj.x, renderObj.y, renderObj.scaleX, renderObj.scaleY, renderObj.rotation, renderObj.skewX, renderObj.skewY, renderObj.regX, renderObj.regY);
-                cM.prependMatrix(this.matrix);
-                renderObj.transformMatrix = cM;
-            }
-        }
-
-        //this.zoomX = this.zoomY = 1;
-    }
-
     updateMatrix() {
         this.matrix = new createjs.Matrix2D();
         this.matrix.appendTransform(-this.x * this.zoomX, -this.y * this.zoomY, this.zoomX, this.zoomY, 0, 0, 0, 0, 0);

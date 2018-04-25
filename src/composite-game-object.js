@@ -26,16 +26,16 @@ export default class CompositeGameObject extends GameObjectContainer {
             c.pointA.y *= y;
             c.pointB.y *= y;
         }
+
+        Matter.Composite.scale(this.composite, 1, 1, this.centre());
     }
 
     flipX() {
         this.scale(-1, 1);
-        this.scale();
     }
 
     flipY() {
         this.scale(1, -1);
-        this.scale();
     }
 
     translate(vec) {

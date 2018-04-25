@@ -1,7 +1,7 @@
 import GameObject from "./game-object.js";
 import ObjectLoader from "./object-loader.js";
-import CompositeGameObject from "./composite-game-object.js";
 import GameObjectContainer from "./game-object-container.js";
+import CompositeGameObject from "./composite-game-object.js";
 
 export default class World {
     constructor(physics, renderer, camera) {
@@ -27,19 +27,11 @@ export default class World {
         return results;
     }
 
-    setCamera(camera) {
-        this.camera = camera;
-    }
-
     addObject(gameObject, layer, depth = 0) {
         if (typeof layer === 'undefined')
             layer = gameObject.layer();
 
         let add = (obj) => {
-            if (obj.renderObj != null) {
-                this.renderer.addObject(obj.renderObj, layer);
-            }
-
             if (obj instanceof GameObjectContainer)
                 for (let gO of obj.gameObjects)
                     this.addObject(gO, layer, depth + 1);
@@ -67,7 +59,6 @@ export default class World {
                 add(gameObject);
             });
         } else {
-            console.log(gameObject);
             add(gameObject);
         }
 
@@ -90,8 +81,6 @@ export default class World {
             gO.update();
         }
 
-        this.camera.update();
-        this.camera.applyTransform(this.gameObjects);
         this.renderer.update();
     }
 }

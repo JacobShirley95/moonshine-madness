@@ -5,6 +5,10 @@ export default class GameObjectContainer {
         this.gameObjects = gameObjects || [];
     }
 
+    layer() {
+        return 0;
+    }
+
     flipX(onlyRenderObj) {
         for (let gO of this.gameObjects) {
             gO.flipX(onlyRenderObj);

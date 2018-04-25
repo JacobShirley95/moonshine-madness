@@ -1,6 +1,7 @@
 export default class Renderer {
     constructor() {
-        this.stage = new createjs.Stage("game");
+        this.stage = new createjs.StageGL("game",  {"antialias": true});
+        this.stage.setClearColor("#FFFFFF");
         this.stage.snapToPixelEnabled = true;
         this.renderObjs = [];
         this.width = $("#game").width();
